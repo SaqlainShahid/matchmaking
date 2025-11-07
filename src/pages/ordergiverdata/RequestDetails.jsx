@@ -1,0 +1,118 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useOrderGiver } from '../../contexts/OrderGiverContext';
+import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import { isImageUrl, thumbnailUrl } from "../../services/cloudinaryService";
+import { Button } from "../../components/ui/button";
+
+const RequestDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { getRequestById, loading } = useOrderGiver();
+  const [request, setRequest] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRequest = async () => {
+      try {
+        const data = await getRequestById(id);
+        if (mounted) setRequest(data);
+      } catch (error) {
+        console.error('Failed to load request:', error);
+      }
+    };
+    fetchRequest();
+    return () => { mounted = false; };
+  }, [id, getRequestById]);
+
+  const formatDate = (d) => {
+    try {
+      if (!d) return '';
+      const dateObj = typeof d.toDate === 'function' ? d.toDate() : new Date(d);
+      return dateObj.toLocaleString();
+    } catch {
+      return '';
+    }
+  };
+
+  if (loading && !request) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (!request) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="py-6">
+            <p className="text-gray-600">Request not found.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-semibold text-gray-800">Request Details</h1>
+        <Button variant="outline" onClick={() => navigate('/requests')}>Back to Requests</Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{request.title || 'Untitled Request'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <p className="text-gray-800">{request.status || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Description</p>
+              <p className="text-gray-800">{request.description || 'No description'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Created</p>
+              <p className="text-gray-800">{formatDate(request.createdAt)}</p>
+            </div>
+            {Array.isArray(request.attachments) && request.attachments.length > 0 && (
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Attachments</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {request.attachments.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group border rounded-md p-2 flex items-center gap-3 hover:bg-gray-50"
+                    >
+                      {isImageUrl(url) ? (
+                        <img
+                          src={thumbnailUrl(url, { width: 120, height: 90 })}
+                          alt={`Attachment ${idx + 1}`}
+                          className="h-16 w-20 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="h-16 w-20 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-xs">
+                          DOC
+                        </div>
+                      )}
+                      <span className="text-blue-600 truncate group-hover:underline">Attachment {idx + 1}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div id="quotes" className="pt-2">
+              <Button onClick={() => navigate('/quotes')}>View Quotes</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default RequestDetails;

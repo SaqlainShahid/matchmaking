@@ -1,0 +1,968 @@
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { uploadToCloudinary } from '../services/cloudinaryService';
+import { useAuth } from '../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Building2, Clock, MapPin, Calendar, Upload, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./ui/card";
+import { useToast } from "./ui/use-toast";
+import { Modal } from "./ui/modal";
+import { sendNotification } from '../services/notificationService';
+import { getMatchingProviders } from '../services/userService';
+import { Progress } from "./ui/progress";
+import { Badge } from "./ui/badge";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for enterprise
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+const serviceCategories = [
+  { 
+    category: 'Facility Management', 
+    services: [
+      { value: 'plumbing', label: 'Plumbing' },
+      { value: 'electrical', label: 'Electrical' },
+      { value: 'hvac', label: 'HVAC' },
+      { value: 'carpentry', label: 'Carpentry' },
+      { value: 'cleaning', label: 'Cleaning' },
+      { value: 'painting', label: 'Painting' },
+      { value: 'landscaping', label: 'Landscaping' }
+    ]
+  },
+  { 
+    category: 'Technical Services', 
+    services: [
+      { value: 'it-support', label: 'IT Support' },
+      { value: 'network', label: 'Network Infrastructure' },
+      { value: 'security-systems', label: 'Security Systems' },
+      { value: 'telecom', label: 'Telecommunications' }
+    ]
+  },
+  { 
+    category: 'Professional Services', 
+    services: [
+      { value: 'consulting', label: 'Business Consulting' },
+      { value: 'training', label: 'Employee Training' },
+      { value: 'marketing', label: 'Marketing Services' }
+    ]
+  }
+];
+
+const priorityLevels = [
+  { 
+    value: 'low', 
+    label: 'Low Priority', 
+    description: 'Routine maintenance or non-critical issues',
+    color: 'text-green-600 bg-green-50 border-green-200',
+    sla: '5-7 business days'
+  },
+  { 
+    value: 'medium', 
+    label: 'Medium Priority', 
+    description: 'Important but not business-critical',
+    color: 'text-blue-600 bg-blue-50 border-blue-200',
+    sla: '2-3 business days'
+  },
+  { 
+    value: 'high', 
+    label: 'High Priority', 
+    description: 'Affecting business operations',
+    color: 'text-orange-600 bg-orange-50 border-orange-200',
+    sla: '24 hours'
+  },
+  { 
+    value: 'critical', 
+    label: 'Critical', 
+    description: 'Business-critical emergency',
+    color: 'text-red-600 bg-red-50 border-red-200',
+    sla: '4 hours'
+  },
+];
+
+export default function EnterpriseRequestForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    serviceType: '',
+    priority: 'medium',
+    location: '',
+    department: '',
+    costCenter: '',
+    scheduledDate: '',
+    budget: '',
+    contactPerson: '',
+    contactPhone: '',
+  });
+  
+  const [files, setFiles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formErrors, setFormErrors] = useState({});
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submittedRequest, setSubmittedRequest] = useState(null);
+  const fileInputRef = useRef(null);
+  
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const validateStep = (step) => {
+    const errors = {};
+    
+    if (step === 1) {
+      if (!formData.title.trim()) errors.title = 'Project title is required';
+      if (!formData.serviceType) errors.serviceType = 'Please select a service type';
+      if (!formData.description.trim()) {
+        errors.description = 'Please provide a detailed description';
+      } else if (formData.description.trim().length < 30) {
+        errors.description = 'Description should be at least 30 characters for proper assessment';
+      }
+      if (!formData.department) errors.department = 'Department is required';
+    }
+    
+    if (step === 2) {
+      if (!formData.location) errors.location = 'Service location is required';
+      if (!formData.costCenter) errors.costCenter = 'Cost center is required';
+      if (!formData.contactPerson) errors.contactPerson = 'Contact person is required';
+      if (!formData.contactPhone) errors.contactPhone = 'Contact phone is required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (!e.target.files?.length) return;
+    
+    const newFiles = Array.from(e.target.files).map(file => ({
+      id: uuidv4(),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+      progress: 0,
+      fileObj: file,
+      ...file
+    }));
+    
+    setFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (id) => {
+    const fileToRemove = files.find(f => f.id === id);
+    if (fileToRemove?.preview) {
+      URL.revokeObjectURL(fileToRemove.preview);
+    }
+    setFiles(files.filter(f => f.id !== id));
+  };
+
+  const uploadFile = async (file) => {
+    try {
+      const url = await uploadToCloudinary(file.fileObj || file, { folder: `requests/${currentUser?.uid || 'anonymous'}` });
+      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, progress: 100 } : f));
+      return url;
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, error: error.message || 'Upload failed', progress: 0 } : f));
+      throw error;
+    }
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 3));
+    }
+  };
+
+  const handlePreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateStep(currentStep)) return;
+    
+    if (currentStep < 3) {
+      handleNextStep();
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Upload all files
+      const uploadPromises = files
+        .filter(file => !file.error && file.progress < 100)
+        .map(file => uploadFile(file));
+      
+      const fileUrls = await Promise.all(uploadPromises);
+      
+      // Create request in Firestore - USING THE MAIN 'requests' COLLECTION
+      const requestData = {
+        title: formData.title,
+        description: formData.description,
+        serviceType: formData.serviceType,
+        priority: formData.priority,
+        status: 'pending', // Using 'pending' instead of 'pending_review' to match dashboard
+        createdBy: currentUser.uid,
+        department: formData.department,
+        costCenter: formData.costCenter,
+        location: {
+          address: formData.location,
+        },
+        budget: formData.budget ? parseFloat(formData.budget) : null,
+        contactInfo: {
+          person: formData.contactPerson,
+          phone: formData.contactPhone,
+          email: currentUser.email,
+        },
+        attachments: fileUrls,
+        responses: 0,
+        quotes: [],
+        metadata: {
+          ipAddress: '',
+          userAgent: navigator.userAgent,
+          submissionType: 'enterprise',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      
+      // Submit to main 'requests' collection
+      const requestRef = await addDoc(collection(db, 'requests'), requestData);
+      
+      // Update user's requests array in the main 'users' collection
+      if (currentUser?.uid) {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          requests: arrayUnion(requestRef.id),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      
+      // Fire-and-forget: notify current user about request creation
+      try {
+        await sendNotification(currentUser.uid, 'REQUEST_CREATED', {
+          requestId: requestRef.id,
+          requestTitle: formData.title || 'Service Request'
+        });
+      } catch (notifyErr) {
+        console.warn('Request created, but notification failed:', notifyErr);
+      }
+
+      // Broadcast to matching providers (category + area)
+      try {
+        const providers = await getMatchingProviders(formData.serviceType, formData.location);
+        await Promise.all(
+          providers.map((p) =>
+            sendNotification(p.id, 'NEW_REQUEST_AVAILABLE', {
+              requestId: requestRef.id,
+              requestTitle: formData.title || 'Service Request',
+              serviceType: formData.serviceType
+            })
+          )
+        );
+      } catch (err) {
+        console.warn('Provider broadcast failed:', err);
+      }
+
+      setSubmittedRequest({ id: requestRef.id, title: formData.title });
+      setShowSuccessModal(true);
+      
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "An error occurred while submitting your request. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-8">
+      {[
+        { number: 1, label: 'Project Details' },
+        { number: 2, label: 'Location & Contact' },
+        { number: 3, label: 'Attachments' }
+      ].map((step, index) => (
+        <div key={step.number} className="flex items-center">
+          <div className="flex flex-col items-center">
+            <div 
+              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                currentStep === step.number 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : currentStep > step.number 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-white border-gray-300 text-gray-500'
+              }`}
+            >
+              {currentStep > step.number ? <CheckIcon className="h-5 w-5" /> : step.number}
+            </div>
+            <span className={`text-xs mt-2 font-medium ${
+              currentStep === step.number ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+              {step.label}
+            </span>
+          </div>
+          {index < 2 && (
+            <div className={`w-24 h-0.5 mx-4 transition-colors duration-300 ${
+              currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'
+            }`}></div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-semibold">Service Title *</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="title"
+                      name="title"
+                      type="text"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      placeholder="Brief description of the service needed"
+                      className={`pl-10 h-11 ${formErrors.title ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                    />
+                  </div>
+                  {formErrors.title && (
+                    <p className="text-sm text-red-600 flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {formErrors.title}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="department" className="text-sm font-semibold">Department *</Label>
+                  <select
+                    id="department"
+                    name="department"
+                    value={formData.department}
+                    onChange={(e) => handleSelectChange('department', e.target.value)}
+                    className={`border rounded-lg p-3 w-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-11 ${
+                      formErrors.department ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="" disabled>Select Department</option>
+                    <option value="operations">Operations</option>
+                    <option value="it">Information Technology</option>
+                    <option value="hr">Human Resources</option>
+                    <option value="finance">Finance</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="facilities">Facilities Management</option>
+                  </select>
+                  {formErrors.department && (
+                    <p className="text-sm text-red-600 flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {formErrors.department}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="serviceType" className="text-sm font-semibold">Service Type *</Label>
+                  <select
+                    id="serviceType"
+                    name="serviceType"
+                    value={formData.serviceType}
+                    onChange={(e) => handleSelectChange('serviceType', e.target.value)}
+                    className={`border rounded-lg p-3 w-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-11 ${
+                      formErrors.serviceType ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="" disabled>Select Service Type</option>
+                    {serviceCategories.map(category => (
+                      <optgroup key={category.category} label={category.category}>
+                        {category.services.map(service => (
+                          <option key={service.value} value={service.value}>
+                            {service.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  {formErrors.serviceType && (
+                    <p className="text-sm text-red-600 flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {formErrors.serviceType}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="budget" className="text-sm font-semibold">Estimated Budget (Optional)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <Input
+                      id="budget"
+                      name="budget"
+                      type="number"
+                      value={formData.budget}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className="pl-8 h-11 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label htmlFor="description" className="text-sm font-semibold">Service Description *</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Please provide detailed information about the service you need, including specific requirements, scope of work, and any relevant details..."
+                rows={5}
+                className={`focus:ring-blue-500 ${formErrors.description ? 'border-red-500' : ''}`}
+              />
+              {formErrors.description ? (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {formErrors.description}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Minimum 30 characters. Provide enough detail for service providers to understand your needs.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-sm font-semibold">Priority Level</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {priorityLevels.map((level) => (
+                  <div 
+                    key={level.value}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                      formData.priority === level.value 
+                        ? level.color
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleSelectChange('priority', level.value)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{level.label}</p>
+                        <p className="text-xs text-gray-600 mt-1">{level.description}</p>
+                        <Badge variant="outline" className="mt-2 text-xs">
+                          SLA: {level.sla}
+                        </Badge>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ml-2 ${
+                        formData.priority === level.value 
+                          ? 'border-current bg-current' 
+                          : 'border-gray-300'
+                      }`}>
+                        {formData.priority === level.value && (
+                          <div className="w-2 h-2 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Service Location
+                  </h4>
+                  <p className="text-sm text-blue-700">Specify where the service needs to be performed</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="text-sm font-semibold">Service Address *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        id="location"
+                        name="location"
+                        type="text"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        placeholder="Enter full service address"
+                        className={`pl-10 h-11 ${formErrors.location ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                      />
+                    </div>
+                    {formErrors.location && (
+                      <p className="text-sm text-red-600 flex items-center mt-1">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {formErrors.location}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="costCenter" className="text-sm font-semibold">Cost Center *</Label>
+                    <Input
+                      id="costCenter"
+                      name="costCenter"
+                      type="text"
+                      value={formData.costCenter}
+                      onChange={handleInputChange}
+                      placeholder="e.g., CC-2024-OPS-001"
+                      className={`h-11 ${formErrors.costCenter ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                    />
+                    {formErrors.costCenter && (
+                      <p className="text-sm text-red-600 flex items-center mt-1">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {formErrors.costCenter}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                    <Clock className="h-4 w-4 mr-2" />
+                    Contact Information
+                  </h4>
+                  <p className="text-sm text-green-700">Primary contact for this service request</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPerson" className="text-sm font-semibold">Contact Person *</Label>
+                    <Input
+                      id="contactPerson"
+                      name="contactPerson"
+                      type="text"
+                      value={formData.contactPerson}
+                      onChange={handleInputChange}
+                      placeholder="Full name of primary contact"
+                      className={`h-11 ${formErrors.contactPerson ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                    />
+                    {formErrors.contactPerson && (
+                      <p className="text-sm text-red-600 flex items-center mt-1">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {formErrors.contactPerson}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone" className="text-sm font-semibold">Contact Phone *</Label>
+                    <Input
+                      id="contactPhone"
+                      name="contactPhone"
+                      type="tel"
+                      value={formData.contactPhone}
+                      onChange={handleInputChange}
+                      placeholder="+1 (555) 123-4567"
+                      className={`h-11 ${formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                    />
+                    {formErrors.contactPhone && (
+                      <p className="text-sm text-red-600 flex items-center mt-1">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {formErrors.contactPhone}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduledDate" className="text-sm font-semibold">Preferred Service Date (Optional)</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        id="scheduledDate"
+                        name="scheduledDate"
+                        type="datetime-local"
+                        value={formData.scheduledDate}
+                        onChange={handleInputChange}
+                        min={new Date().toISOString().slice(0, 16)}
+                        className="pl-10 h-11 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-8">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                Supporting Documentation
+              </h4>
+              <p className="text-sm text-gray-600">
+                Upload relevant documents, photos, or specifications to help service providers understand your requirements better.
+                Maximum file size: 10MB per file.
+              </p>
+            </div>
+
+            <div 
+              className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-blue-400 transition-all duration-200 bg-white"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <Upload className="h-12 w-12 text-gray-400" />
+                <div>
+                  <p className="font-semibold text-gray-900 text-lg">Upload Supporting Files</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Drag and drop files here or click to browse
+                  </p>
+              <p className="text-xs text-gray-400 mt-2">
+                Supports: Images (Cloudinary), PDF/Docs as links
+              </p>
+                </div>
+                <Button type="button" variant="outline" className="mt-4 border-blue-600 text-blue-600 hover:bg-blue-50">
+                  Select Files
+                </Button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                multiple
+                onChange={handleFileChange}
+                accept="image/*,.pdf,.doc,.docx"
+              />
+            </div>
+
+            {files.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900">Selected Files ({files.length})</h4>
+                <div className="space-y-3">
+                  {files.map((file) => (
+                    <div 
+                      key={file.id}
+                      className="border border-gray-200 rounded-lg p-4 flex items-center justify-between bg-white hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-center space-x-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          {file.preview ? (
+                            <img 
+                              src={file.preview} 
+                              alt="Preview" 
+                              className="h-12 w-12 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <FileText className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{file.name}</p>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <p className="text-sm text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            <span className="text-gray-300">•</span>
+                            <p className="text-sm text-gray-500 capitalize">
+                              {file.type.split('/')[1] || file.type}
+                            </p>
+                          </div>
+                          {file.error && (
+                            <p className="text-sm text-red-600 flex items-center mt-1">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              {file.error}
+                            </p>
+                          )}
+                          {file.progress > 0 && file.progress < 100 && (
+                            <div className="mt-2">
+                              <Progress value={file.progress} className="h-2 bg-gray-200" />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Uploading... {Math.round(file.progress)}%
+                              </p>
+                            </div>
+                          )}
+                          {file.progress === 100 && (
+                            <p className="text-sm text-green-600 flex items-center mt-1">
+                              <CheckIcon className="h-4 w-4 mr-1" />
+                              Ready for submission
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(file.id);
+                        }}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Simple icon components
+  const CheckIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+
+  const XIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="pb-4 border-b border-gray-200 bg-white">
+              <div className="text-center">
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  New Service Request
+                </CardTitle>
+                <p className="text-gray-600 mt-2">
+                  Submit a detailed service request for professional service providers
+                </p>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-8">
+              {renderStepIndicator()}
+
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`step-${currentStep}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {renderStepContent()}
+                  </motion.div>
+                </AnimatePresence>
+                
+                <div className="flex justify-between items-center pt-8 border-t border-gray-200">
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={currentStep === 1 ? () => setShowCancelModal(true) : handlePreviousStep}
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5"
+                  >
+                    {currentStep === 1 ? 'Cancel' : 'Back'}
+                  </Button>
+                  
+                  <div className="flex items-center space-x-4">
+                    {currentStep < 3 && (
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: "Draft Saved",
+                            description: "Your request has been saved as a draft.",
+                          });
+                        }}
+                        disabled={isSubmitting}
+                        className="px-6 py-2.5"
+                      >
+                        Save Draft
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {currentStep === 3 ? 'Submitting...' : 'Processing...'}
+                        </>
+                      ) : currentStep === 3 ? (
+                        'Submit Request'
+                      ) : (
+                        'Continue'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+            
+            <CardFooter className="bg-gray-50 p-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600 text-center w-full">
+                <p className="font-medium">Professional Service Portal</p>
+                <p className="mt-1">Your request will be visible to qualified service providers who can submit quotes.</p>
+                <p className="text-xs mt-2">Request ID will be generated upon submission • You can track progress in your dashboard</p>
+              </div>
+            </CardFooter>
+          </Card>
+          {/* Cancel Confirmation Modal */}
+          <Modal
+            open={showCancelModal}
+            onClose={() => setShowCancelModal(false)}
+            title="Cancel Request"
+            icon={<XCircle className="h-5 w-5 text-red-600" />}
+            footer={(
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  Keep Editing
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    navigate('/requests');
+                  }}
+                >
+                  Yes, cancel
+                </Button>
+              </>
+            )}
+          >
+            <p className="text-sm text-gray-600">
+              Are you sure you want to cancel this request?
+            </p>
+          </Modal>
+
+          {/* Success Modal after submission */}
+          <Modal
+            open={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            title="Request Submitted"
+            icon={<CheckCircle className="h-5 w-5 text-green-600" />}
+            footer={(
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSuccessModal(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/requests');
+                  }}
+                >
+                  View Requests
+                </Button>
+                {submittedRequest?.id && (
+                  <Button
+                    className="bg-gray-900 hover:bg-black text-white"
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      navigate(`/requests/${submittedRequest.id}`);
+                    }}
+                  >
+                    Open Details
+                  </Button>
+                )}
+              </>
+            )}
+          >
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700">
+                Your new request has been created successfully.
+              </p>
+              {submittedRequest?.title && (
+                <p className="text-sm text-gray-500">
+                  Title: <span className="font-medium text-gray-900">{submittedRequest.title}</span>
+                </p>
+              )}
+            </div>
+          </Modal>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// Modals
+// Cancel confirmation modal
+// Success submission modal
+
+// Inject modals near the bottom inside the component before return is not possible without refactor; we render them just above the closing tags
