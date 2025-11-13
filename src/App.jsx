@@ -23,12 +23,15 @@ import ProviderProjects from './pages/Serviceproviderdata/Projects'
 import ProviderInvoices from './pages/Serviceproviderdata/Invoices'
 import ProviderSettings from './pages/Serviceproviderdata/Settings'
 import ProviderMessages from './pages/Serviceproviderdata/Messages'
+import ProviderServices from './pages/Serviceproviderdata/Services'
 import Requests from './pages/ordergiverdata/Requests'
 import RequestDetails from './pages/ordergiverdata/RequestDetails'
 import Quotes from './pages/ordergiverdata/Quotes'
-import Checkout from './pages/ordergiverdata/Checkout'
-import Projects from './pages/ordergiverdata/Projects'
-import Messages from './pages/ordergiverdata/Messages'
+import Checkout from './pages/ordergiverdata/Checkout'    
+import Projects from './pages/ordergiverdata/Projects'    
+import OGProviders from './pages/ordergiverdata/Providers'
+import OGProviderServices from './pages/ordergiverdata/ProviderServices'
+import Messages from './pages/ordergiverdata/Messages'    
 import FeedbackOG from './pages/ordergiverdata/Feedback'
 import RequestForm from './components/RequestForm'
 import Settings from './pages/ordergiverdata/Settings'
@@ -45,6 +48,8 @@ import AdminDisputes from './pages/admindata/Disputes'
 import AdminConfig from './pages/admindata/Config'
 import AdminFeedback from './pages/admindata/Feedback'
 import AdminMessages from './pages/admindata/Messages'
+import AdminProviderServices from './pages/admindata/ProviderServices'
+import AdminProviderServiceDetail from './pages/admindata/ProviderServiceDetail'
 import FeedbackProvider from './pages/Serviceproviderdata/Feedback'
 
 function App() {
@@ -103,6 +108,8 @@ function App() {
           <Route path="/quotes" element={<Quotes />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/providers" element={<OGProviders />} />
+          <Route path="/providers/:providerId/services" element={<OGProviderServices />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/feedback" element={<FeedbackOG />} />
           <Route path="/settings" element={<Settings />} />
@@ -126,6 +133,7 @@ function App() {
           <Route path="/provider/quotes" element={<ProviderQuotes />} />
           <Route path="/provider/quotes/new" element={<ProviderQuotes />} />
           <Route path="/provider/projects" element={<ProviderProjects />} />
+          <Route path="/provider/services" element={<ProviderServices />} />
           <Route path="/provider/invoices" element={<ProviderInvoices />} />
           <Route path="/provider/messages" element={<ProviderMessages />} />
           <Route path="/provider/feedback" element={<FeedbackProvider />} />
@@ -146,6 +154,8 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/providers" element={<AdminProviders />} />
+          <Route path="/admin/providers/:providerId/services" element={<AdminProviderServices />} />
+          <Route path="/admin/providers/:providerId/services/:serviceId" element={<AdminProviderServiceDetail />} />
           <Route path="/admin/requests" element={<AdminRequests />} />
           <Route path="/admin/quotes" element={<AdminQuotes />} />
           <Route path="/admin/payments" element={<AdminPayments />} />

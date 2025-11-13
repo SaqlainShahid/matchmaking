@@ -111,7 +111,7 @@ const Quotes = () => {
           )}
           {showQuoteModal && (
             <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+              <div className="bg-white rounded-lg shadow-lg w-full sm:max-w-lg md:max-w-2xl lg:max-w-3xl p-6">
                 <h3 className="text-lg font-semibold mb-4">Create Professional Quote</h3>
                 {requestSummary && (
                   <div className="mb-4 bg-gray-50 border border-gray-100 rounded-md p-3 text-sm">

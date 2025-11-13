@@ -162,7 +162,7 @@ const Requests = () => {
       {/* Request Details Modal */}
       {showDetails && selectedRequest && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
+          <div className="bg-white rounded-lg shadow-lg w-full sm:max-w-lg md:max-w-2xl lg:max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
             <h3 className="text-xl font-semibold text-gray-900">{selectedRequest.title || 'Request Details'}</h3>
             <p className="text-sm text-gray-700 mt-2">{selectedRequest.description || 'No description provided.'}</p>
             <div className="mt-4">
@@ -221,7 +221,7 @@ const Requests = () => {
       {/* Inline Quote Modal */}
       {showQuoteModal && selectedRequest && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
+          <div className="bg-white rounded-lg shadow-lg w-full sm:max-w-lg md:max-w-2xl lg:max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
             <h3 className="text-xl font-semibold text-gray-900">Submit Professional Quote</h3>
             <p className="text-sm text-gray-700 mt-2">Provide a clear offer including timing and scope.</p>
             <form onSubmit={submitInlineQuote} className="space-y-6 mt-4">

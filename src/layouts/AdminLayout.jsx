@@ -9,12 +9,15 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Default collapsed preference could be loaded from user doc if needed
   }, []);
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+  const openMobileMenu = () => setIsMobileMenuOpen(true);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const handleLogout = async () => { try { await signOut(auth); navigate('/login'); } catch (e) { console.error(e); } };
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${isCollapsed ? 'px-3 justify-center' : ''}`;
 
@@ -33,11 +36,31 @@ const AdminLayout = () => {
     { path: '/admin/config', icon: FiSettings, label: 'Config' }
   ];
 
-  const sidebarWidth = isCollapsed ? 'w-20' : 'w-64';
+  const sidebarWidth = isCollapsed ? 'lg:w-20 w-64' : 'w-64';
 
   return (
-    <div className="min-h-screen flex bg-gray-50 font-inter">
-      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${sidebarWidth} flex flex-col fixed h-screen transition-all duration-300 z-30`}>
+    <div className="min-h-screen bg-gray-50 font-inter">
+      {/* Mobile Topbar */}
+      <div className="h-14 bg-white border-b flex items-center justify-between px-4 lg:hidden">
+        <button onClick={openMobileMenu} className="p-2 rounded-lg hover:bg-gray-100">
+          <FiMenu size={18} />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center"><span className="text-white font-bold text-sm">M</span></div>
+          <div>
+            <h4 className="font-semibold text-gray-900 text-base leading-5">Matchmaking</h4>
+            <p className="text-xs text-gray-500">Admin</p>
+          </div>
+        </div>
+        <div className="w-10" />
+      </div>
+
+      {/* Backdrop for mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={closeMobileMenu} />
+      )}
+
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${sidebarWidth} flex flex-col fixed inset-y-0 left-0 h-screen bg-white transition-transform duration-300 z-40 border-r border-gray-200 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="header flex items-center justify-between px-4 bg-white">
           {!isCollapsed ? (
             <div className="flex items-center space-x-3">
@@ -54,7 +77,7 @@ const AdminLayout = () => {
           {items.map(item => {
             const Icon = item.icon; const isActive = location.pathname === item.path || (item.end ? location.pathname === item.path : location.pathname.startsWith(item.path));
             return (
-              <NavLink key={item.path} to={item.path} end={item.end} className={navClass} title={isCollapsed ? item.label : ''}>
+              <NavLink key={item.path} to={item.path} end={item.end} className={navClass} title={isCollapsed ? item.label : ''} onClick={closeMobileMenu}>
                 <Icon size={18} className={`transition-colors ${isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'} ${isCollapsed ? '' : 'mr-3'}`} />
                 {!isCollapsed && (<><span className="flex-1">{item.label}</span>{isActive && (<FiChevronRight size={16} className="text-blue-700 ml-2" />)}</>)}
               </NavLink>
@@ -70,8 +93,8 @@ const AdminLayout = () => {
           )}
         </div>
       </aside>
-      <main className={`${isCollapsed ? 'ml-20' : 'ml-64'} flex-1 min-h-screen`}>
-        <div className="p-6">
+      <main className={`${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'} min-h-screen`}>
+        <div className="p-4 sm:p-6">
           <Outlet />
         </div>
       </main>

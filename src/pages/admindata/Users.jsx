@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getAllUsers, updateUserRole, suspendUser, deleteUser } from '../../services/adminService';
 
 const Users = () => {
@@ -38,6 +39,7 @@ const Users = () => {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="w-full overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -53,7 +55,7 @@ const Users = () => {
             ) : filtered.length === 0 ? (
               <tr><td className="px-4 py-6" colSpan={4}>No users found.</td></tr>
             ) : filtered.map(u => (
-              <tr key={u.uid} className="border-t">
+              <tr key={u.uid || u.id} className="border-t">
                 <td className="px-4 py-2">{u.displayName || '—'}</td>
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2">
@@ -68,6 +70,11 @@ const Users = () => {
                   </select>
                 </td>
                 <td className="px-4 py-2 space-x-2">
+                  {isProviderRole(u.role) && (
+                    <Link className="text-blue-700 hover:underline" to={`/admin/providers/${u.uid}/services`}>
+                      View Services
+                    </Link>
+                  )}
                   <button className="text-yellow-700 hover:underline" onClick={() => handleSuspend(u.uid)}>Suspend</button>
                   <button className="text-red-700 hover:underline" onClick={() => handleDelete(u.uid)}>Delete</button>
                 </td>
@@ -75,6 +82,7 @@ const Users = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

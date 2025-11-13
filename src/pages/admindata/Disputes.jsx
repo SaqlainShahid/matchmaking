@@ -22,6 +22,7 @@ const Disputes = () => {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="w-full overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -51,6 +52,7 @@ const Disputes = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ const ProviderLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -82,6 +83,11 @@ const ProviderLayout = () => {
     };
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -107,18 +113,21 @@ const ProviderLayout = () => {
     { path: '/provider/requests', icon: FiFileText, label: 'Requests' },
     { path: '/provider/quotes', icon: FiClipboard, label: 'Quotes' },
     { path: '/provider/projects', icon: FiBriefcase, label: 'Projects' },
+    { path: '/provider/services', icon: FiBriefcase, label: 'Services' },
     { path: '/provider/invoices', icon: FiFile, label: 'Invoices' },
     { path: '/provider/messages', icon: FiMessageSquare, label: 'Messages' },
     { path: '/provider/feedback', icon: FiClipboard, label: 'Feedback' },
   ];
 
-  const sidebarWidth = isCollapsed ? 'w-20' : 'w-64';
-  const mainContentMargin = isCollapsed ? 'ml-20' : 'ml-64';
+  // Mobile shows full-width drawer; large screens use collapsed widths
+  const sidebarWidth = isCollapsed ? 'w-64 lg:w-20' : 'w-64 lg:w-64';
+  const mainContentMargin = isCollapsed ? 'ml-0 lg:ml-20' : 'ml-0 lg:ml-64';
+  const mobileSidebarTranslate = isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full';
 
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
-      <aside className={`${sidebarWidth} bg-white border-r border-gray-200 flex flex-col flex-shrink-0 fixed h-screen transition-all duration-300 z-30`}>
+      <aside className={`${sidebarWidth} bg-white border-r border-gray-200 flex flex-col flex-shrink-0 fixed top-0 left-0 h-screen transition-transform duration-300 transform ${mobileSidebarTranslate} lg:translate-x-0 z-50`}>
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Brand */}
           <div className="flex-shrink-0 flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-white">
@@ -254,10 +263,26 @@ const ProviderLayout = () => {
         </div>
       </aside>
 
+      {/* Mobile overlay backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm lg:hidden z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Content */}
       <div className={`flex-1 flex flex-col min-w-0 ${mainContentMargin} transition-all duration-300`}>
         <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 h-16 px-6 flex items-center justify-between">
           <div className="flex items-center">
+            {/* Mobile menu button */}
+            <button
+              className="p-2 mr-2 rounded-lg lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+              aria-label="Open menu"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <FiMenu size={18} />
+            </button>
             <div className="relative w-75">
               <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
                 <FiSearch className="h-3.5 w-3.5 text-gray-400" />

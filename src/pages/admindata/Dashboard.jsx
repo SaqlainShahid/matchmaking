@@ -101,7 +101,7 @@ const Dashboard = () => {
       {/* Header / Actions */}
       <div className="card glass">
         <div className="card-content">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h2>
               <p className="text-gray-600 mt-1">Overview of platform activity and performance</p>
@@ -109,7 +109,7 @@ const Dashboard = () => {
                 <p className="text-xs text-gray-500 mt-1">Last updated: {lastUpdated.toLocaleString()}</p>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:flex-wrap">
               <button className="btn-secondary" onClick={exportCsv}>
                 <span className="inline-flex items-center gap-2"><FiDownloadCloud /> Export CSV</span>
               </button>
