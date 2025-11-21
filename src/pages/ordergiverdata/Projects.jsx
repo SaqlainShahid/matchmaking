@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/ta
 import { Input } from "../../components/ui/input";
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, MessageSquare, DollarSign, Calendar, MapPin, User, HardHat, Check, Clock as ClockIcon } from 'lucide-react';
 import { Skeleton } from "../../components/ui/skeleton";
+import { t } from '../../lib/i18n';
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -75,22 +76,22 @@ const Projects = () => {
   const getStatusBadge = (status) => {
     const statusMap = {
       active: { 
-        text: 'In Progress', 
+        text: t('Active'), 
         className: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
         icon: <ClockIcon className="h-4 w-4 mr-1" />
       },
       completed: { 
-        text: 'Completed', 
+        text: t('Completed'), 
         className: 'bg-green-100 text-green-800 hover:bg-green-200',
         icon: <CheckCircle className="h-4 w-4 mr-1" />
       },
       cancelled: { 
-        text: 'Cancelled', 
+        text: t('Cancelled'), 
         className: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
         icon: <XCircle className="h-4 w-4 mr-1" />
       },
       pending: { 
-        text: 'Pending', 
+        text: t('Pending'), 
         className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
         icon: <ClockIcon className="h-4 w-4 mr-1" />
       }
@@ -100,7 +101,7 @@ const Projects = () => {
 
   const handleMarkComplete = async (e, projectId) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to mark this project as completed?')) {
+    if (window.confirm(t('Are you sure you want to mark this project as completed?'))) {
       try {
         await updateProjectStatus(projectId, 'completed');
         await loadProjects(activeTab);
@@ -114,7 +115,7 @@ const Projects = () => {
 
   const handleCancelProject = async (e, projectId) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to cancel this project?')) {
+    if (window.confirm(t('Are you sure you want to cancel this project?'))) {
       try {
         await updateProjectStatus(projectId, 'cancelled');
         await loadProjects(activeTab);

@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Input } from "./ui/input";
 import { Modal } from "./ui/modal";
 import { Search, Clock, AlertCircle, CheckCircle, XCircle, MessageSquare, DollarSign, Calendar } from 'lucide-react';
+import { t } from '../lib/i18n';
 
 const RequestList = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ const RequestList = () => {
 
   const handleCompleteRequest = async (e, requestId) => {
     e.stopPropagation();
-    if (window.confirm('Mark this request as completed?')) {
+    if (window.confirm(t('Mark this request as completed?'))) {
       await markRequestAsCompleted(requestId);
     }
   };
@@ -127,7 +128,7 @@ const RequestList = () => {
           </div>
           <Input
             type="text"
-            placeholder="Search requests..."
+            placeholder={t('Search requests...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 w-full"
@@ -149,19 +150,19 @@ const RequestList = () => {
         >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all" aria-label="All requests">
-              <span>All</span>
+              <span>{t('All')}</span>
               <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.length}</span>
             </TabsTrigger>
             <TabsTrigger value="pending" aria-label="Pending requests">
-              <span>Pending</span>
+              <span>{t('Pending')}</span>
               <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'pending').length}</span>
             </TabsTrigger>
             <TabsTrigger value="in_progress" aria-label="In-progress requests">
-              <span>In Progress</span>
+              <span>{t('In Progress')}</span>
               <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'in_progress').length}</span>
             </TabsTrigger>
             <TabsTrigger value="completed" aria-label="Completed requests">
-              <span>Completed</span>
+              <span>{t('Completed')}</span>
               <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'completed').length}</span>
             </TabsTrigger>
           </TabsList>
@@ -173,13 +174,13 @@ const RequestList = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900">No requests found</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('No requests found')}</h3>
           <p className="mt-2 text-sm text-gray-500">
             {searchTerm 
-              ? 'No requests match your search. Try a different search term.'
+              ? t('No requests match your search. Try a different search term.')
               : activeTab === 'all'
-                ? 'You haven\'t created any service requests yet.'
-                : `You don't have any ${activeTab.replace('_', ' ')} requests.`}
+                ? t("You haven't created any service requests yet.")
+                : t("You don't have any {status} requests.", { status: activeTab.replace('_', ' ') })}
           </p>
           <div className="mt-6">
             <Button
@@ -190,7 +191,7 @@ const RequestList = () => {
               <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
-              New Request
+              {t('New Request')}
             </Button>
           </div>
         </div>
@@ -263,7 +264,7 @@ const RequestList = () => {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    {request.title || 'Untitled Request'}
+                    {request.title || t('Untitled Request')}
                     <Badge className={status.className}>
                       {status.icon}
                       {status.text}
@@ -277,13 +278,13 @@ const RequestList = () => {
               </CardHeader>
               <CardContent className="pb-2">
                 <p className="text-gray-600 line-clamp-2">
-                  {request.description || 'No description provided'}
+                  {request.description || t('No description provided')}
                 </p>
                 
                 <div className="mt-3 flex flex-wrap gap-2 text-sm">
                   <Badge variant="outline">
                     <Calendar className="h-3.5 w-3.5 mr-1" />
-                    {request.scheduledDate || 'No date set'}
+                    {request.scheduledDate || t('No date set')}
                   </Badge>
                   
                   {request.serviceType && (
@@ -311,7 +312,7 @@ const RequestList = () => {
                         handleViewQuotes(request.id);
                       }}
                     >
-                      View Quotes ({request.quotes?.length || 0})
+                      {t('View Quotes')} ({request.quotes?.length || 0})
                     </Button>
                   )}
                   
@@ -325,7 +326,7 @@ const RequestList = () => {
                       }}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
-                      Message Provider
+                      {t('Message Provider')}
                     </Button>
                   )}
                 </div>
@@ -337,7 +338,7 @@ const RequestList = () => {
                       size="sm"
                       onClick={(e) => handleCancelRequest(e, request.id)}
                     >
-                      Cancel
+                      {t('Cancel')}
                     </Button>
                   )}
                   
@@ -347,7 +348,7 @@ const RequestList = () => {
                       size="sm"
                       onClick={(e) => handleCompleteRequest(e, request.id)}
                     >
-                      Mark as Completed
+                      {t('Mark as Completed')}
                     </Button>
                   )}
                 </div>
@@ -357,8 +358,8 @@ const RequestList = () => {
                 <div className="border-t p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">Rate this service</h4>
-                      <p className="text-xs text-gray-500">Let us know about your experience</p>
+                      <h4 className="text-sm font-medium text-gray-900">{t('Rate this service')}</h4>
+                      <p className="text-xs text-gray-500">{t('Let us know about your experience')}</p>
                     </div>
                     <div className="flex space-x-1">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -390,7 +391,7 @@ const RequestList = () => {
                       <textarea
                         rows="3"
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        placeholder="Share your experience (optional)"
+                        placeholder={t('Share your experience (optional)')}
                         value={review}
                         onChange={(e) => setReview(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
@@ -404,14 +405,14 @@ const RequestList = () => {
                             setShowRatingModal(null);
                           }}
                         >
-                          Cancel
+                          {t('Cancel')}
                         </Button>
                         <Button
                           variant="default"
                           size="sm"
                           onClick={(e) => handleRateRequest(e, request)}
                         >
-                          Submit Review
+                          {t('Submit Review')}
                         </Button>
                       </div>
                     </div>
@@ -427,12 +428,12 @@ const RequestList = () => {
       <Modal
         open={!!cancelRequestId}
         onClose={() => setCancelRequestId(null)}
-        title="Cancel Request"
+        title={t('Cancel Request')}
         icon={<XCircle className="h-5 w-5 text-red-600" />}
         footer={(
           <>
             <Button variant="outline" onClick={() => setCancelRequestId(null)}>
-              Keep Request
+              {t('Keep Request')}
             </Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
@@ -443,12 +444,12 @@ const RequestList = () => {
                 setCancelRequestId(null);
               }}
             >
-              Yes, cancel
+              {t('Yes, cancel')}
             </Button>
           </>
         )}
       >
-        <p className="text-sm text-gray-600">Are you sure you want to cancel this request?</p>
+        <p className="text-sm text-gray-600">{t('Are you sure you want to cancel this request?')}</p>
       </Modal>
     </div>
   );

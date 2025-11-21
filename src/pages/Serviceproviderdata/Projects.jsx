@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
+import { t } from '../../lib/i18n';
 
 const Projects = () => {
   const ctx = useProvider();
@@ -62,16 +63,16 @@ const Projects = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Projects</h2>
-        <p className="text-gray-600 mt-2">Manage accepted jobs and track progress</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('Projects')}</h2>
+        <p className="text-gray-600 mt-2">{t('Manage accepted jobs and track progress')}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="active">{t('Active')}</TabsTrigger>
+          <TabsTrigger value="completed">{t('Completed')}</TabsTrigger>
+          <TabsTrigger value="cancelled">{t('Cancelled')}</TabsTrigger>
+          <TabsTrigger value="all">{t('All')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4">
@@ -79,18 +80,18 @@ const Projects = () => {
             <Card className="border border-gray-200 rounded-lg shadow-sm">
               <CardHeader className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <CardTitle className="text-lg font-semibold text-gray-900">
-                  {activeTab === 'all' ? 'Projects' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects`}
+                  {activeTab === 'all' ? t('Projects') : `${t(activeTab.charAt(0).toUpperCase() + activeTab.slice(1))} ${t('Projects')}`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="p-6 text-center text-gray-500">No {activeTab === 'all' ? '' : activeTab + ' '}projects</div>
+                <div className="p-6 text-center text-gray-500">{t('No')} {activeTab === 'all' ? '' : t(activeTab.charAt(0).toUpperCase() + activeTab.slice(1)) + ' '} {t('Projects').toLowerCase()}</div>
               </CardContent>
             </Card>
           ) : (
             <Card className="border border-gray-200 rounded-lg shadow-sm">
               <CardHeader className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <CardTitle className="text-lg font-semibold text-gray-900">
-                  {activeTab === 'all' ? 'Projects' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects`}
+                  {activeTab === 'all' ? t('Projects') : `${t(activeTab.charAt(0).toUpperCase() + activeTab.slice(1))} ${t('Projects')}`}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -99,12 +100,12 @@ const Projects = () => {
                     <div key={p.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-gray-900">{p.title || 'Project'}</p>
+                          <p className="font-medium text-gray-900">{p.title || t('Project')}</p>
                           <div className="mt-1 flex items-center gap-2">
                             <Badge variant="secondary" className="text-xs">
-                              {p.status === 'completed' ? 'Completed' : (p.status || 'Active')}
+                              {p.status === 'completed' ? t('Completed') : t(p.status || 'Active')}
                             </Badge>
-                            <span className="text-sm text-gray-600">{Math.min(100, p.progress || 0)}% complete</span>
+                            <span className="text-sm text-gray-600">{Math.min(100, p.progress || 0)}% {t('complete')}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -117,7 +118,7 @@ const Projects = () => {
                               value={progressDraftByProject[p.id] ?? Math.min(100, p.progress || 0)}
                               onChange={(e) => setProgressDraftByProject(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
                               className="w-40 accent-blue-600"
-                              aria-label="Project progress"
+                              aria-label={t('Project progress')}
                             />
                             <div className="text-sm text-gray-700 w-12 text-right">
                               {(progressDraftByProject[p.id] ?? Math.min(100, p.progress || 0))}%
@@ -127,10 +128,10 @@ const Projects = () => {
                             variant="outline"
                             onClick={() => handleUpdate(p.id, progressDraftByProject[p.id] ?? Math.min(100, p.progress || 0))}
                           >
-                            Save
+                            {t('Save')}
                           </Button>
-                          <Button variant="outline" onClick={() => setCompleteModal({ open: true, projectId: p.id })}>Mark Completed</Button>
-                          <Button onClick={() => handleGenerateInvoice(p.id)}>Generate Invoice</Button>
+                          <Button variant="outline" onClick={() => setCompleteModal({ open: true, projectId: p.id })}>{t('Mark Completed')}</Button>
+                          <Button onClick={() => handleGenerateInvoice(p.id)}>{t('Generate Invoice')}</Button>
                         </div>
                       </div>
                       <div className="mt-3 h-3 bg-gray-100 rounded overflow-hidden">
@@ -159,16 +160,16 @@ const Projects = () => {
                           {fileByProject[p.id]?.name && (
                             <span className="text-xs text-gray-500 truncate max-w-[160px]">{fileByProject[p.id].name}</span>
                           )}
-                          <Button variant="outline" disabled={!fileByProject[p.id]} onClick={() => handleAddPhoto(p.id)}>Add Photo</Button>
+                          <Button variant="outline" disabled={!fileByProject[p.id]} onClick={() => handleAddPhoto(p.id)}>{t('Add Photo')}</Button>
                         </div>
                         <div className="flex items-center gap-2 md:col-span-2">
                           <Input
-                            placeholder="Add a progress comment"
+                            placeholder={t('Add a progress comment')}
                             value={commentByProject[p.id] || ''}
                             onChange={(e) => setCommentByProject(prev => ({ ...prev, [p.id]: e.target.value }))}
                             className="w-full md:max-w-md"
                           />
-                          <Button variant="outline" disabled={!commentByProject[p.id]} onClick={() => handleAddComment(p.id)}>Add Comment</Button>
+                          <Button variant="outline" disabled={!commentByProject[p.id]} onClick={() => handleAddComment(p.id)}>{t('Add Comment')}</Button>
                         </div>
                       </div>
                     </div>
@@ -183,16 +184,16 @@ const Projects = () => {
       {completeModal.open && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">Confirm Completion</h3>
-            <p className="text-sm text-gray-700">Please confirm you have completed all agreed-upon work according to the contract terms. Marking as completed will notify the client and finalize this project.</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">{t('Confirm Completion')}</h3>
+            <p className="text-sm text-gray-700">{t('Please confirm you have completed all agreed-upon work according to the contract terms. Marking as completed will notify the client and finalize this project.')}</p>
             <ul className="text-sm text-gray-600 mt-3 list-disc pl-5">
-              <li>All deliverables are provided and verified.</li>
-              <li>Any remaining issues are documented.</li>
-              <li>You accept the service terms and warranty policies.</li>
+              <li>{t('All deliverables are provided and verified.')}</li>
+              <li>{t('Any remaining issues are documented.')}</li>
+              <li>{t('You accept the service terms and warranty policies.')}</li>
             </ul>
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setCompleteModal({ open: false, projectId: null })}>Cancel</Button>
-              <Button onClick={async () => { try { await handleUpdate(completeModal.projectId, 100); } finally { setCompleteModal({ open: false, projectId: null }); }}}>Confirm & Complete</Button>
+              <Button variant="outline" onClick={() => setCompleteModal({ open: false, projectId: null })}>{t('Cancel')}</Button>
+              <Button onClick={async () => { try { await handleUpdate(completeModal.projectId, 100); } finally { setCompleteModal({ open: false, projectId: null }); }}}>{t('Confirm & Complete')}</Button>
             </div>
           </div>
         </div>

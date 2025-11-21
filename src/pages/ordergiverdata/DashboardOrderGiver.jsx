@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import { Button } from "../../components/ui/button";
 import RequestList from '../../components/RequestList';
 import { Plus, FileText, Clock, CheckCircle, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { t } from '../../lib/i18n';
 
 const DashboardOrderGiver = () => {
   const navigate = useNavigate();
@@ -39,33 +40,33 @@ const DashboardOrderGiver = () => {
 
   const statCards = [
     {
-      title: "Total Requests",
+      title: t('Total Requests'),
       value: stats.totalRequests,
-      description: "All service requests",
+      description: t('All service requests'),
       icon: FileText,
       color: "blue",
       trend: calculateTrend(stats.totalRequests, previousStats?.totalRequests)
     },
     {
-      title: "Pending Quotes",
+      title: t('Pending Quotes'),
       value: stats.pendingQuotes,
-      description: "Awaiting responses",
+      description: t('Awaiting responses'),
       icon: Clock,
       color: "amber",
       trend: calculateTrend(stats.pendingQuotes, previousStats?.pendingQuotes)
     },
     {
-      title: "Active Projects",
+      title: t('Active Projects'),
       value: stats.activeProjects,
-      description: "In progress",
+      description: t('In progress'),
       icon: CheckCircle,
       color: "emerald",
       trend: calculateTrend(stats.activeProjects, previousStats?.activeProjects)
     },
     {
-      title: "Total Investment",
+      title: t('Total Investment'),
       value: `$${stats.totalSpent.toLocaleString()}`,
-      description: "Project expenditure",
+      description: t('Project expenditure'),
       icon: DollarSign,
       color: "violet",
       trend: calculateTrend(stats.totalSpent, previousStats?.totalSpent)
@@ -103,19 +104,19 @@ const DashboardOrderGiver = () => {
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Project Dashboard</h2>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('Project Dashboard')}</h2>
             <p className="text-gray-600 mt-2 text-base">
-              Overview of your service requests and project portfolio
+              {t('Overview of your service requests and project portfolio')}
             </p>
             <div className="mt-3 h-1 w-16 bg-blue-600 rounded"></div>
           </div>
           <Button
             onClick={handleCreateRequest}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            aria-label="Create a new service request"
+            aria-label={t('Create a new service request')}
           >
             <Plus className="h-5 w-5 mr-2" />
-            Create Request
+            {t('New Request')}
           </Button>
         </div>
       </div>
@@ -202,10 +203,10 @@ const DashboardOrderGiver = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900 font-sans">
-                Service Requests
+                {t('Service Requests')}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
-                {previousStats ? `Compared to previous period • ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}` : 'Manage your ongoing service requests'}
+                {previousStats ? `${t('Compared to previous period')} • ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}` : t('Manage your ongoing service requests')}
               </p>
             </div>
             <div className="flex gap-3">
@@ -213,14 +214,14 @@ const DashboardOrderGiver = () => {
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 font-medium"
               >
-                Export
+                {t('Export')}
               </Button>
               <Button 
                 onClick={handleCreateRequest}
                 className="bg-gray-900 hover:bg-gray-800 text-white font-medium"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                New Request
+                {t('New Request')}
               </Button>
             </div>
           </div>

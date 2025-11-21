@@ -24,6 +24,7 @@ import {
   FiSearch, FiPaperclip, FiSend, FiImage, FiFile, FiDownload, FiClock, FiCheck, FiCheckCircle, FiArchive, FiTrash2
 } from 'react-icons/fi';
 import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
+import { t } from '../../lib/i18n';
 
 const Messages = () => {
   const ctx = useProvider();
@@ -181,7 +182,7 @@ const Messages = () => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     if (isToday(date)) return format(date, 'HH:mm');
-    if (isYesterday(date)) return 'Yesterday';
+    if (isYesterday(date)) return t('Yesterday');
     if (isThisWeek(date)) return format(date, 'EEE');
     return format(date, 'MMM dd');
   };
@@ -190,7 +191,7 @@ const Messages = () => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     if (isToday(date)) return format(date, 'HH:mm');
-    if (isYesterday(date)) return 'Yesterday';
+    if (isYesterday(date)) return t('Yesterday');
     return format(date, 'MMM dd');
   };
 
@@ -208,8 +209,8 @@ const Messages = () => {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Messages</h2>
-          <p className="text-gray-600">Chat with order givers about requests and quotes</p>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('Messages')}</h2>
+          <p className="text-gray-600">{t('Chat with order givers about requests and quotes')}</p>
         </div>
       </div>
 
@@ -220,25 +221,25 @@ const Messages = () => {
             <div className="relative">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search conversations..."
+                placeholder={t('Search conversations...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
             <div className="flex gap-2">
-              <Button variant={activeTab === 'active' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('active')}>Active</Button>
-              <Button variant={activeTab === 'archived' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('archived')}>Archived</Button>
+              <Button variant={activeTab === 'active' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('active')}>{t('Active')}</Button>
+              <Button variant={activeTab === 'archived' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('archived')}>{t('Archived')}</Button>
             </div>
           </CardHeader>
           <ScrollArea className="flex-1">
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="p-4 text-center text-gray-500">Loading conversations...</div>
+                <div className="p-4 text-center text-gray-500">{t('Loading conversations...')}</div>
               ) : filteredConversations.length === 0 ? (
                 <div className="p-8 text-center">
-                  <div className="text-gray-400 mb-2">No conversations</div>
-                  <div className="text-sm text-gray-500">Start a conversation with an order giver</div>
+                  <div className="text-gray-400 mb-2">{t('No conversations')}</div>
+                  <div className="text-sm text-gray-500">{t('Start a conversation with an order giver')}</div>
                 </div>
               ) : (
                 filteredConversations.map((c) => {
@@ -266,7 +267,7 @@ const Messages = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-1">
                             <div className="font-semibold text-gray-900 truncate text-sm">
-                              {profile?.name || 'Unknown User'}
+                              {profile?.name || t('Unknown User')}
                             </div>
                             <div className="flex items-center gap-1 ml-2">
                               {unreadCount > 0 && (
@@ -278,7 +279,7 @@ const Messages = () => {
                             </div>
                           </div>
                           <div className="text-xs text-gray-600 truncate mb-1">
-                            {c.lastMessage?.text || 'No messages yet'}
+                            {c.lastMessage?.text || t('No messages yet')}
                           </div>
                           {profile?.companyName && (
                             <div className="text-xs text-gray-500 truncate">
@@ -328,7 +329,7 @@ const Messages = () => {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleArchiveConversation(activeConvId)}>
                     <FiArchive className="h-4 w-4 mr-1" />
-                    Archive
+                    {t('Archive')}
                   </Button>
                 </div>
               </div>
@@ -345,8 +346,8 @@ const Messages = () => {
                   <div className="space-y-4">
                     {messages.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
-                        <div className="text-lg font-semibold mb-2">No messages yet</div>
-                        <div className="text-sm">Start the conversation by sending a message</div>
+                        <div className="text-lg font-semibold mb-2">{t('No messages yet')}</div>
+                        <div className="text-sm">{t('Start the conversation by sending a message')}</div>
                       </div>
                     ) : (
                       messages.map((message, index) => {
@@ -403,7 +404,7 @@ const Messages = () => {
                                       Array.isArray(message.readBy) && otherUser?.id && message.readBy.includes(otherUser.id) ? (
                                         <span className="flex items-center gap-1 text-xs text-blue-100">
                                           <FiCheckCircle className="h-3 w-3" />
-                                          Seen
+                                          {t('Seen')}
                                         </span>
                                       ) : (
                                         <FiCheck className="h-3 w-3" />
@@ -452,7 +453,7 @@ const Messages = () => {
                     <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                       <FiPaperclip className="h-4 w-4" />
                     </Button>
-                    <Input placeholder="Type your message..." value={text} onChange={(e) => handleTyping(e.target.value)} className="flex-1" />
+                    <Input placeholder={t('Type your message...')} value={text} onChange={(e) => handleTyping(e.target.value)} className="flex-1" />
                     <Button type="submit" disabled={!text.trim() && files.length === 0} className="bg-blue-600 hover:bg-blue-700">
                       <FiSend className="h-4 w-4" />
                     </Button>
@@ -462,8 +463,8 @@ const Messages = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <div className="text-lg font-semibold mb-2">No conversation selected</div>
-                  <div className="text-sm">Choose a conversation from the list to start messaging</div>
+                  <div className="text-lg font-semibold mb-2">{t('No conversation selected')}</div>
+                  <div className="text-sm">{t('Choose a conversation from the list to start messaging')}</div>
                 </div>
               </div>
             )}

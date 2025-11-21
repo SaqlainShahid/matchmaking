@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAllDisputes, resolveDispute } from '../../services/adminService';
+import { t } from '../../lib/i18n';
 
 const Disputes = () => {
   const [disputes, setDisputes] = useState([]);
@@ -17,8 +18,8 @@ const Disputes = () => {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-xl p-4 border border-gray-200">
-        <h3 className="font-semibold text-gray-900">Disputes & Feedback</h3>
-        <p className="text-sm text-gray-600">Review complaints and resolve issues.</p>
+        <h3 className="font-semibold text-gray-900">{t('Disputes & Feedback')}</h3>
+        <p className="text-sm text-gray-600">{t('Review complaints and resolve issues.')}</p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -26,18 +27,18 @@ const Disputes = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="text-left px-4 py-2">Request</th>
-              <th className="text-left px-4 py-2">From</th>
-              <th className="text-left px-4 py-2">Message</th>
-              <th className="text-left px-4 py-2">Status</th>
-              <th className="text-left px-4 py-2">Actions</th>
+              <th className="text-left px-4 py-2">{t('Request')}</th>
+              <th className="text-left px-4 py-2">{t('From')}</th>
+              <th className="text-left px-4 py-2">{t('Message')}</th>
+              <th className="text-left px-4 py-2">{t('Status')}</th>
+              <th className="text-left px-4 py-2">{t('Actions')}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-4 py-6" colSpan={5}>Loading...</td></tr>
+              <tr><td className="px-4 py-6" colSpan={5}>{t('Loading...')}</td></tr>
             ) : disputes.length === 0 ? (
-              <tr><td className="px-4 py-6" colSpan={5}>No disputes found.</td></tr>
+              <tr><td className="px-4 py-6" colSpan={5}>{t('No disputes found.')}</td></tr>
             ) : disputes.map(d => (
               <tr key={d.id} className="border-t">
                 <td className="px-4 py-2">{d.requestId}</td>
@@ -45,8 +46,8 @@ const Disputes = () => {
                 <td className="px-4 py-2">{d.message}</td>
                 <td className="px-4 py-2">{d.status || 'open'}</td>
                 <td className="px-4 py-2 space-x-2">
-                  <button className="text-green-700 hover:underline" onClick={() => handleResolve(d.id, 'refund_approved')}>Approve Refund</button>
-                  <button className="text-yellow-700 hover:underline" onClick={() => handleResolve(d.id, 'provider_penalized')}>Penalize Provider</button>
+                  <button className="text-green-700 hover:underline" onClick={() => handleResolve(d.id, 'refund_approved')}>{t('Approve Refund')}</button>
+                  <button className="text-yellow-700 hover:underline" onClick={() => handleResolve(d.id, 'provider_penalized')}>{t('Penalize Provider')}</button>
                 </td>
               </tr>
             ))}

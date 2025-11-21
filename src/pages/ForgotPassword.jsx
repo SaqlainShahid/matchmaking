@@ -3,6 +3,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { t } from '../lib/i18n';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     
     if (!email) {
-      setError('Please enter your email address');
+      setError(t('Please enter your email address'));
       return;
     }
 
@@ -24,7 +25,7 @@ const ForgotPassword = () => {
       setError('');
       
       await sendPasswordResetEmail(auth, email);
-      setMessage('Password reset email sent! Please check your inbox.');
+      setMessage(t('Password reset email sent! Please check your inbox.'));
       
       setTimeout(() => {
         setMessage('');
@@ -48,10 +49,10 @@ const ForgotPassword = () => {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-md">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Reset Your Password
+            {t('Reset Your Password')}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
+            {t("Enter your email address and we'll send you a link to reset your password.")}
           </p>
         </div>
 
@@ -88,7 +89,7 @@ const ForgotPassword = () => {
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <label htmlFor="email-address" className="sr-only">
-                  Email address
+                  {t('Email address')}
                 </label>
                 <input
                   id="email-address"
@@ -97,7 +98,7 @@ const ForgotPassword = () => {
                   autoComplete="email"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
+                  placeholder={t('Email address')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -112,7 +113,7 @@ const ForgotPassword = () => {
                   loading ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
               >
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading ? t('Sending...') : t('Send Reset Link')}
               </button>
             </div>
           </form>
@@ -123,7 +124,7 @@ const ForgotPassword = () => {
             onClick={() => navigate('/login')}
             className="font-medium text-green-600 hover:text-green-500 focus:outline-none"
           >
-            Back to Login
+            {t('Back to Login')}
           </button>
         </div>
       </div>

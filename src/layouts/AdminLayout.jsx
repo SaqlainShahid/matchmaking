@@ -4,6 +4,7 @@ import { auth } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { Button } from '../components/ui/button';
 import { FiHome, FiUsers, FiClipboard, FiFileText, FiFile, FiBell, FiBarChart2, FiMessageSquare, FiSettings, FiChevronRight, FiMenu, FiChevronLeft, FiLogOut } from 'react-icons/fi';
+import { t } from '../lib/i18n';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -22,18 +23,18 @@ const AdminLayout = () => {
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${isCollapsed ? 'px-3 justify-center' : ''}`;
 
   const items = [
-    { path: '/admin/dashboard', icon: FiHome, label: 'Dashboard', end: true },
-    { path: '/admin/users', icon: FiUsers, label: 'Users' },
-    { path: '/admin/providers', icon: FiClipboard, label: 'Providers' },
-    { path: '/admin/requests', icon: FiFileText, label: 'Requests' },
-    { path: '/admin/quotes', icon: FiClipboard, label: 'Quotes' },
-    { path: '/admin/payments', icon: FiFile, label: 'Payments' },
-    { path: '/admin/notifications', icon: FiBell, label: 'Notifications' },
-    { path: '/admin/messages', icon: FiMessageSquare, label: 'Messages' },
-    { path: '/admin/feedback', icon: FiClipboard, label: 'Feedback' },
-    { path: '/admin/analytics', icon: FiBarChart2, label: 'Analytics' },
-    { path: '/admin/disputes', icon: FiMessageSquare, label: 'Disputes' },
-    { path: '/admin/config', icon: FiSettings, label: 'Config' }
+    { path: '/admin/dashboard', icon: FiHome, label: t('Dashboard'), end: true },
+    { path: '/admin/users', icon: FiUsers, label: t('Users') },
+    { path: '/admin/providers', icon: FiClipboard, label: t('Providers') },
+    { path: '/admin/requests', icon: FiFileText, label: t('Requests') },
+    { path: '/admin/quotes', icon: FiClipboard, label: t('Quotes') },
+    { path: '/admin/payments', icon: FiFile, label: t('Payments') },
+    { path: '/admin/notifications', icon: FiBell, label: t('Notifications') },
+    { path: '/admin/messages', icon: FiMessageSquare, label: t('Messages') },
+    { path: '/admin/feedback', icon: FiClipboard, label: t('Feedback') },
+    { path: '/admin/analytics', icon: FiBarChart2, label: t('Analytics') },
+    { path: '/admin/disputes', icon: FiMessageSquare, label: t('Disputes') },
+    { path: '/admin/config', icon: FiSettings, label: t('Config') }
   ];
 
   const sidebarWidth = isCollapsed ? 'lg:w-20 w-64' : 'w-64';
@@ -49,7 +50,7 @@ const AdminLayout = () => {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center"><span className="text-white font-bold text-sm">M</span></div>
           <div>
             <h4 className="font-semibold text-gray-900 text-base leading-5">Matchmaking</h4>
-            <p className="text-xs text-gray-500">Admin</p>
+            <p className="text-xs text-gray-500">{t('Admin')}</p>
           </div>
         </div>
         <div className="w-10" />
@@ -67,7 +68,7 @@ const AdminLayout = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center"><span className="text-white font-bold text-sm">M</span></div>
               <div>
                 <h4 className="font-semibold text-gray-900 text-base">Matchmaking</h4>
-                <p className="text-xs text-gray-500">Admin</p>
+                <p className="text-xs text-gray-500">{t('Admin')}</p>
               </div>
             </div>
           ) : (<div className="w-8 h-8" />)}
@@ -87,8 +88,8 @@ const AdminLayout = () => {
         <div className="mt-auto border-t border-gray-200 p-3 bg-white">
           {!isCollapsed && (
             <div className="flex items-center justify-between text-xs">
-              <button onClick={() => navigate('/admin/config')} className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"><FiSettings size={14} className="mr-1" />Settings</button>
-              <button onClick={handleLogout} className="flex items-center text-gray-500 hover:text-red-600 transition-colors"><FiLogOut size={14} className="mr-1" />Logout</button>
+              <button onClick={() => navigate('/admin/config')} className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"><FiSettings size={14} className="mr-1" />{t('Settings')}</button>
+              <button onClick={handleLogout} className="flex items-center text-gray-500 hover:text-red-600 transition-colors"><FiLogOut size={14} className="mr-1" />{t('Logout')}</button>
             </div>
           )}
         </div>

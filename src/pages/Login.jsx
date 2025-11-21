@@ -3,13 +3,12 @@ import { motion } from "framer-motion";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
-  sendEmailVerification,
-  reload,
-  signOut,
+  sendEmailVerification
 } from "firebase/auth";
 import { auth, provider, db } from "../firebaseConfig";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
+import { t } from '../lib/i18n';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -31,7 +30,7 @@ export default function Login() {
     e.preventDefault();
 
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError(t("Please fill in all fields"));
       return;
     }
 
@@ -51,12 +50,12 @@ export default function Login() {
             url: window.location.origin + '/login',
             handleCodeInApp: true
           });
-          setError("Please verify your email. A verification link has been sent to your email address.");
+          setError(t("Please verify your email. A verification link has been sent to your email address."));
           await auth.signOut(); // Sign out the user until email is verified
           return;
         } catch (verificationError) {
           console.error("Error sending verification email:", verificationError);
-          setError("Error sending verification email. Please try again later.");
+          setError(t("Error sending verification email. Please try again later."));
           return;
         }
       }
@@ -76,7 +75,7 @@ export default function Login() {
         } else {
           role = snap.data().role || role;
         }
-      } catch (_) {
+      } catch {
         // Network hiccup? Proceed with default role
       }
 
@@ -132,7 +131,7 @@ export default function Login() {
       
     } catch (error) {
       console.error("Google Sign In Error:", error);
-      setError(error.message || "Failed to sign in with Google. Please try again.");
+      setError(error.message || t("Failed to sign in with Google. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -196,7 +195,7 @@ export default function Login() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              Welcome Back
+              {t('Welcome Back')}
             </motion.h2>
             <motion.p 
               className="text-gray-600 text-sm"
@@ -204,7 +203,7 @@ export default function Login() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Sign in to continue
+              {t('Sign in to continue')}
             </motion.p>
           </div>
 
@@ -229,7 +228,7 @@ export default function Login() {
                 transition={{ delay: 0.4 }}
               >
                 <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
-                  Email address
+                  {t('Email address')}
                 </label>
                 <div className="relative">
                   <input
@@ -239,7 +238,7 @@ export default function Login() {
                     autoComplete="email"
                     required
                     className="w-full px-3 py-2 text-sm bg-white/50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                    placeholder="you@example.com"
+                    placeholder={t('you@example.com')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -253,13 +252,13 @@ export default function Login() {
               >
                 <div className="flex items-center justify-between mb-1">
                   <label htmlFor="password" className="block text-xs font-medium text-gray-700">
-                    Password
+                    {t('Password')}
                   </label>
                   <Link 
                     to="/forgot-password" 
                     className="text-xs font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
                   >
-                    Forgot password?
+                    {t('Forgot password?')}
                   </Link>
                 </div>
                 <div className="relative">
@@ -298,10 +297,10 @@ export default function Login() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Signing in...
+                      {t('Signing in...')}
                     </div>
                   ) : (
-                    'Sign In'
+                    t('Sign In')
                   )}
                 </span>
               </motion.button>
@@ -314,7 +313,7 @@ export default function Login() {
               transition={{ delay: 0.7 }}
             >
               <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink mx-3 text-gray-500 text-xs">OR</span>
+              <span className="flex-shrink mx-3 text-gray-500 text-xs">{t('OR')}</span>
               <div className="flex-grow border-t border-gray-300"></div>
             </motion.div>
 
@@ -351,13 +350,13 @@ export default function Login() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
-              Don't have an account?{' '}
+              {t("Don't have an account?")}{' '}
               <button
                 type="button"
                 onClick={() => navigate('/signup')}
                 className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
               >
-                Sign up
+                {t('Sign up')}
               </button>
             </motion.p>
           </div>
@@ -372,9 +371,9 @@ export default function Login() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white/95 backdrop-blur-lg border border-white/80 rounded-xl shadow-2xl w-full max-w-sm p-5 mx-4"
           >
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Please Register</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">{t('Please Register')}</h2>
             <p className="text-gray-600 text-sm mb-4">
-              No account is linked to this Google login. Please register to continue.
+              {t('No account is linked to this Google login. Please register to continue.')}
             </p>
             <div className="flex gap-3">
               <motion.button
@@ -384,7 +383,7 @@ export default function Login() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Go to Signup
+                {t('Go to Signup')}
               </motion.button>
               <motion.button
                 type="button"
@@ -393,7 +392,7 @@ export default function Login() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Close
+                {t('Close')}
               </motion.button>
             </div>
           </motion.div>

@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { FiUsers, FiMessageSquare, FiEye, FiMapPin, FiTag, FiSearch } from 'react-icons/fi';
+import { t } from '../../lib/i18n';
 
 const Providers = () => {
   const navigate = useNavigate();
@@ -61,12 +62,12 @@ const Providers = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <FiUsers className="text-gray-700" />
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-dark)' }}>Service Providers</h1>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-dark)' }}>{t('Providers')}</h1>
         </div>
         <div className="relative w-full sm:w-80">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search providers by name, type, or area"
+            placeholder={t('Search providers by name, type, or area')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -75,15 +76,15 @@ const Providers = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading providers…</div>
+        <div className="text-center py-12 text-gray-500">{t('Loading providers…')}</div>
       ) : filtered.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-gray-600">No providers found</CardContent>
+          <CardContent className="py-10 text-center text-gray-600">{t('No providers found')}</CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((p) => {
-            const name = p.displayName || p.companyName || 'Unnamed Provider';
+            const name = p.displayName || p.companyName || t('Provider');
             const initials = String(name).charAt(0).toUpperCase();
             const area = p.serviceArea || p.city || '';
             const type = p.serviceType || (Array.isArray(p.services) ? p.services.join(', ') : '');
@@ -112,15 +113,15 @@ const Providers = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-2 pt-2">
-                    <Badge variant="secondary" className="text-xs">Role: {(p.role || 'provider').replace('_', ' ')}</Badge>
-                    {p.verified && <Badge className="text-xs">Verified</Badge>}
+                    <Badge variant="secondary" className="text-xs">{t('Role:')} {(p.role || 'provider').replace('_', ' ')}</Badge>
+                    {p.verified && <Badge className="text-xs">{t('Verified')}</Badge>}
                   </div>
                   <div className="flex gap-2 pt-3">
                     <Button onClick={() => handleViewServices(p.id)}>
-                      <FiEye className="h-4 w-4 mr-1" /> View Services
+                      <FiEye className="h-4 w-4 mr-1" /> {t('Services')}
                     </Button>
                     <Button variant="outline" onClick={() => handleMessage(p.id)}>
-                      <FiMessageSquare className="h-4 w-4 mr-1" /> Message
+                      <FiMessageSquare className="h-4 w-4 mr-1" /> {t('Message')}
                     </Button>
                   </div>
                 </CardContent>

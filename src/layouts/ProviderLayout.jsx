@@ -21,6 +21,7 @@ import {
   FiMenu,
   FiChevronLeft
 } from 'react-icons/fi';
+import { t } from '../lib/i18n';
 
 const ProviderLayout = () => {
   const navigate = useNavigate();
@@ -109,14 +110,14 @@ const ProviderLayout = () => {
     } ${isCollapsed ? 'px-3 justify-center' : ''}`;
 
   const menuItems = [
-    { path: '/provider/dashboard', icon: FiHome, label: 'Dashboard', end: true },
-    { path: '/provider/requests', icon: FiFileText, label: 'Requests' },
-    { path: '/provider/quotes', icon: FiClipboard, label: 'Quotes' },
-    { path: '/provider/projects', icon: FiBriefcase, label: 'Projects' },
-    { path: '/provider/services', icon: FiBriefcase, label: 'Services' },
-    { path: '/provider/invoices', icon: FiFile, label: 'Invoices' },
-    { path: '/provider/messages', icon: FiMessageSquare, label: 'Messages' },
-    { path: '/provider/feedback', icon: FiClipboard, label: 'Feedback' },
+    { path: '/provider/dashboard', icon: FiHome, label: t('Dashboard'), end: true },
+    { path: '/provider/requests', icon: FiFileText, label: t('Requests') },
+    { path: '/provider/quotes', icon: FiClipboard, label: t('Quotes') },
+    { path: '/provider/projects', icon: FiBriefcase, label: t('Projects') },
+    { path: '/provider/services', icon: FiBriefcase, label: t('Services') },
+    { path: '/provider/invoices', icon: FiFile, label: t('Invoices') },
+    { path: '/provider/messages', icon: FiMessageSquare, label: t('Messages') },
+    { path: '/provider/feedback', icon: FiClipboard, label: t('Feedback') },
   ];
 
   // Mobile shows full-width drawer; large screens use collapsed widths
@@ -138,7 +139,7 @@ const ProviderLayout = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 text-base">Matchmaking</h4>
-                  <p className="text-xs text-gray-500">Provider</p>
+                  <p className="text-xs text-gray-500">{t('Provider')}</p>
                 </div>
               </div>
             ) : (
@@ -197,10 +198,10 @@ const ProviderLayout = () => {
               className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center ${
                 isCollapsed ? 'px-2' : ''
               }`}
-              title={isCollapsed ? 'New Quote' : ''}
+              title={isCollapsed ? t('New Quote') : ''}
             >
               <FiPlus size={18} className={isCollapsed ? '' : 'mr-2'} />
-              {!isCollapsed && 'New Quote'}
+              {!isCollapsed && t('New Quote')}
             </Button>
           </div>
 
@@ -230,14 +231,14 @@ const ProviderLayout = () => {
                   className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <FiSettings size={14} className="mr-1" />
-                  Settings
+                  {t('Settings')}
                 </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center text-gray-500 hover:text-red-600 transition-colors"
                 >
                   <FiLogOut size={14} className="mr-1" />
-                  Logout
+                  {t('Logout')}
                 </button>
               </div>
             )}
@@ -245,7 +246,7 @@ const ProviderLayout = () => {
               <div className="flex flex-col items-center space-y-3 text-xs">
                 <button
                   className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
-                  title="Settings"
+                  title={t('Settings')}
                   onClick={() => navigate('/provider/settings')}
                 >
                   <FiSettings size={16} />
@@ -253,7 +254,7 @@ const ProviderLayout = () => {
                 <button
                   onClick={handleLogout}
                   className="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
-                  title="Logout"
+                  title={t('Logout')}
                 >
                   <FiLogOut size={16} />
                 </button>
@@ -278,7 +279,7 @@ const ProviderLayout = () => {
             {/* Mobile menu button */}
             <button
               className="p-2 mr-2 rounded-lg lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-              aria-label="Open menu"
+              aria-label={t('Open menu')}
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <FiMenu size={18} />
@@ -289,7 +290,7 @@ const ProviderLayout = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search"
+                placeholder={t('Search')}
                 className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
@@ -319,7 +320,7 @@ const ProviderLayout = () => {
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('Notifications')}</p>
                     <button
                       onClick={async () => {
                         const uid = auth.currentUser?.uid;
@@ -329,12 +330,12 @@ const ProviderLayout = () => {
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
-                      Mark all as read
+                      {t('Mark all as read')}
                     </button>
                   </div>
                   <ul className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 && (
-                      <li className="px-4 py-6 text-sm text-gray-500 text-center">No notifications</li>
+                      <li className="px-4 py-6 text-sm text-gray-500 text-center">{t('No notifications')}</li>
                     )}
                     {notifications.map((n) => (
                       <li

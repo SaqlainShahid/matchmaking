@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllUsers, updateUserRole, suspendUser, deleteUser } from '../../services/adminService';
+import { t } from '../../lib/i18n';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -24,17 +25,17 @@ const Users = () => {
     await updateUserRole(uid, role);
   };
   const handleSuspend = async (uid) => { await suspendUser(uid); };
-  const handleDelete = async (uid) => { if (window.confirm('Delete user?')) { await deleteUser(uid); setUsers(prev => prev.filter(u => u.uid !== uid)); } };
+  const handleDelete = async (uid) => { if (window.confirm(t('Delete user?'))) { await deleteUser(uid); setUsers(prev => prev.filter(u => u.uid !== uid)); } };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between bg-white rounded-xl p-4 border border-gray-200">
-        <h3 className="font-semibold text-gray-900">Users</h3>
+        <h3 className="font-semibold text-gray-900">{t('Users')}</h3>
         <select className="border rounded-md px-3 py-2 text-sm" value={filter} onChange={e => setFilter(e.target.value)}>
-          <option value="all">All</option>
-          <option value="order_giver">Order Givers</option>
-          <option value="provider">Providers</option>
-          <option value="admin">Admins</option>
+          <option value="all">{t('All')}</option>
+          <option value="order_giver">{t('Order Givers')}</option>
+          <option value="provider">{t('Providers')}</option>
+          <option value="admin">{t('Admins')}</option>
         </select>
       </div>
 
@@ -43,17 +44,17 @@ const Users = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="text-left px-4 py-2">Name</th>
-              <th className="text-left px-4 py-2">Email</th>
-              <th className="text-left px-4 py-2">Role</th>
-              <th className="text-left px-4 py-2">Actions</th>
+              <th className="text-left px-4 py-2">{t('Name')}</th>
+              <th className="text-left px-4 py-2">{t('Email')}</th>
+              <th className="text-left px-4 py-2">{t('Role')}</th>
+              <th className="text-left px-4 py-2">{t('Actions')}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-4 py-6" colSpan={4}>Loading...</td></tr>
+              <tr><td className="px-4 py-6" colSpan={4}>{t('Loading...')}</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td className="px-4 py-6" colSpan={4}>No users found.</td></tr>
+              <tr><td className="px-4 py-6" colSpan={4}>{t('No users found.')}</td></tr>
             ) : filtered.map(u => (
               <tr key={u.uid || u.id} className="border-t">
                 <td className="px-4 py-2">{u.displayName || '—'}</td>
@@ -64,19 +65,19 @@ const Users = () => {
                     value={normalizeRole(u.role)}
                     onChange={e => handleRoleChange(u.uid, e.target.value)}
                   >
-                    <option value="order_giver">Order Giver</option>
-                    <option value="service_provider">Provider</option>
-                    <option value="admin">Admin</option>
+                    <option value="order_giver">{t('Order Giver')}</option>
+                    <option value="service_provider">{t('Provider')}</option>
+                    <option value="admin">{t('Admin')}</option>
                   </select>
                 </td>
                 <td className="px-4 py-2 space-x-2">
                   {isProviderRole(u.role) && (
                     <Link className="text-blue-700 hover:underline" to={`/admin/providers/${u.uid}/services`}>
-                      View Services
+                      {t('View Services')}
                     </Link>
                   )}
-                  <button className="text-yellow-700 hover:underline" onClick={() => handleSuspend(u.uid)}>Suspend</button>
-                  <button className="text-red-700 hover:underline" onClick={() => handleDelete(u.uid)}>Delete</button>
+                  <button className="text-yellow-700 hover:underline" onClick={() => handleSuspend(u.uid)}>{t('Suspend')}</button>
+                  <button className="text-red-700 hover:underline" onClick={() => handleDelete(u.uid)}>{t('Delete')}</button>
                 </td>
               </tr>
             ))}

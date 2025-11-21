@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
-import { getAdminAnalyticsSummary, syncStripe, getAllInvoices, getAllRequests, getAllUsers, getMonthlyRevenueSnapshot, getMonthlyUsersSnapshot, getMonthlyRequestsSnapshot, computeTimeSeriesTrends } from '../../services/adminService';
+import { getAdminAnalyticsSummary, syncStripe, getMonthlyRevenueSnapshot, getMonthlyUsersSnapshot, getMonthlyRequestsSnapshot, computeTimeSeriesTrends } from '../../services/adminService';
 import { FiRefreshCw, FiDownloadCloud, FiBell, FiChevronRight } from 'react-icons/fi';
 import ComingSoon from '../../components/ComingSoon';
+import { t } from '../../lib/i18n';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ users: 0, providers: 0, requests: 0, quotes: 0, invoices: 0, revenue: 0 });
@@ -14,7 +15,7 @@ const Dashboard = () => {
   const [requestsTrend, setRequestsTrend] = useState([]);
   const [trendRevenue, setTrendRevenue] = useState({ current: 0, previous: null, mom: null, yoy: null });
   const [trendUsers, setTrendUsers] = useState({ current: 0, previous: null, mom: null, yoy: null });
-  const [trendRequests, setTrendRequests] = useState({ current: 0, previous: null, mom: null, yoy: null });
+  
 
   useEffect(() => {
     refreshStats();
@@ -36,7 +37,7 @@ const Dashboard = () => {
           return { month: label, total: value };
         });
         setRevenueData(data);
-      } catch (_) {
+      } catch {
         setRevenueData([]);
       }
       // Load users and requests monthly trend (last 6 months)
@@ -46,7 +47,6 @@ const Dashboard = () => {
           getMonthlyRequestsSnapshot(12)
         ]);
         setTrendUsers(computeTimeSeriesTrends(usersSeries));
-        setTrendRequests(computeTimeSeriesTrends(requestsSeries));
         const usersData = usersSeries.slice(Math.max(0, usersSeries.length - 6)).map(({ key, value }) => {
           const [y, m] = key.split('-');
           const label = new Date(Number(y), Number(m) - 1, 1).toLocaleString(undefined, { month: 'short' });
@@ -59,11 +59,11 @@ const Dashboard = () => {
         });
         setUsersTrend(usersData);
         setRequestsTrend(requestsData);
-      } catch (_) {
+      } catch {
         setUsersTrend([]);
         setRequestsTrend([]);
       }
-    } catch (_) {
+    } catch {
       // swallow for now
     } finally {
       setLoading(false);
@@ -103,21 +103,21 @@ const Dashboard = () => {
         <div className="card-content">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h2>
-              <p className="text-gray-600 mt-1">Overview of platform activity and performance</p>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('Admin Dashboard')}</h2>
+              <p className="text-gray-600 mt-1">{t('Overview of platform activity and performance')}</p>
               {lastUpdated && (
-                <p className="text-xs text-gray-500 mt-1">Last updated: {lastUpdated.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">{t('Last updated:')} {lastUpdated.toLocaleString()}</p>
               )}
             </div>
             <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:flex-wrap">
               <button className="btn-secondary" onClick={exportCsv}>
-                <span className="inline-flex items-center gap-2"><FiDownloadCloud /> Export CSV</span>
+                <span className="inline-flex items-center gap-2"><FiDownloadCloud /> {t('Export CSV')}</span>
               </button>
               <button className="btn-secondary" onClick={() => window.location.assign('/admin/notifications')}>
-                <span className="inline-flex items-center gap-2"><FiBell /> Broadcast</span>
+                <span className="inline-flex items-center gap-2"><FiBell /> {t('Broadcast')}</span>
               </button>
               <button className="btn-primary" onClick={refreshStats}>
-                <span className="inline-flex items-center gap-2"><FiRefreshCw /> Refresh</span>
+                <span className="inline-flex items-center gap-2"><FiRefreshCw /> {t('Refresh')}</span>
               </button>
             </div>
           </div>
@@ -129,9 +129,9 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Total Users</p>
+              <p className="text-sm text-gray-500">{t('Total Users')}</p>
               <span className={`kpi-chip ${trendUsers.mom > 0 ? 'kpi-success' : trendUsers.mom < 0 ? 'kpi-error' : 'kpi-info'}`}>
-                <span className="kpi-dot"></span> MoM {formatPct(trendUsers.mom)}
+                <span className="kpi-dot"></span> {t('MoM')} {formatPct(trendUsers.mom)}
               </span>
             </div>
             <p className="text-2xl font-semibold">{stats.users}</p>
@@ -140,8 +140,8 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Providers</p>
-              <span className="kpi-chip kpi-success"><span className="kpi-dot"></span> Supply</span>
+              <p className="text-sm text-gray-500">{t('Providers')}</p>
+              <span className="kpi-chip kpi-success"><span className="kpi-dot"></span> {t('Supply')}</span>
             </div>
             <p className="text-2xl font-semibold">{stats.providers}</p>
           </CardContent>
@@ -149,8 +149,8 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Requests</p>
-              <span className="kpi-chip kpi-warning"><span className="kpi-dot"></span> Demand</span>
+              <p className="text-sm text-gray-500">{t('Requests')}</p>
+              <span className="kpi-chip kpi-warning"><span className="kpi-dot"></span> {t('Demand')}</span>
             </div>
             <p className="text-2xl font-semibold">{stats.requests}</p>
           </CardContent>
@@ -158,8 +158,8 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Quotes</p>
-              <span className="kpi-chip kpi-info"><span className="kpi-dot"></span> Pipeline</span>
+              <p className="text-sm text-gray-500">{t('Quotes')}</p>
+              <span className="kpi-chip kpi-info"><span className="kpi-dot"></span> {t('Pipeline')}</span>
             </div>
             <p className="text-2xl font-semibold">{stats.quotes}</p>
           </CardContent>
@@ -167,8 +167,8 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Invoices</p>
-              <span className="kpi-chip kpi-success"><span className="kpi-dot"></span> Billing</span>
+              <p className="text-sm text-gray-500">{t('Invoices')}</p>
+              <span className="kpi-chip kpi-success"><span className="kpi-dot"></span> {t('Billing')}</span>
             </div>
             <p className="text-2xl font-semibold">{stats.invoices}</p>
           </CardContent>
@@ -176,13 +176,13 @@ const Dashboard = () => {
         <Card className="card glass">
           <CardContent className="card-content">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Revenue</p>
+              <p className="text-sm text-gray-500">{t('Revenue')}</p>
               <div className="flex items-center gap-2">
                 <span className={`kpi-chip ${trendRevenue.mom > 0 ? 'kpi-success' : trendRevenue.mom < 0 ? 'kpi-error' : 'kpi-info'}`}>
-                  <span className="kpi-dot"></span> MoM {formatPct(trendRevenue.mom)}
+                  <span className="kpi-dot"></span> {t('MoM')} {formatPct(trendRevenue.mom)}
                 </span>
                 <span className={`kpi-chip ${trendRevenue.yoy > 0 ? 'kpi-success' : trendRevenue.yoy < 0 ? 'kpi-error' : 'kpi-info'}`}>
-                  <span className="kpi-dot"></span> YoY {formatPct(trendRevenue.yoy)}
+                  <span className="kpi-dot"></span> {t('YoY')} {formatPct(trendRevenue.yoy)}
                 </span>
               </div>
             </div>
@@ -197,9 +197,9 @@ const Dashboard = () => {
           <div className="card glass">
             <div className="card-header">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('Revenue Trend')}</h3>
                 <button className="btn-secondary" onClick={() => syncStripe().catch(() => {})}>
-                  Sync Stripe
+                  {t('Sync Stripe')}
                 </button>
               </div>
             </div>
@@ -224,25 +224,25 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                  No paid invoices yet
+                  {t('No paid invoices yet')}
                 </div>
               )}
             </div>
           </div>
           <div className="card glass">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('Recent Activity')}</h3>
             </div>
             <div className="card-content">
               <ul className="space-y-3 text-sm text-gray-700">
-                <li className="flex items-center justify-between"><span>New users joined</span><span className="text-gray-500">{stats.users}</span></li>
-                <li className="flex items-center justify-between"><span>New requests</span><span className="text-gray-500">{stats.requests}</span></li>
-                <li className="flex items-center justify-between"><span>Quotes issued</span><span className="text-gray-500">{stats.quotes}</span></li>
-                <li className="flex items-center justify-between"><span>Invoices generated</span><span className="text-gray-500">{stats.invoices}</span></li>
+                <li className="flex items-center justify-between"><span>{t('New users joined')}</span><span className="text-gray-500">{stats.users}</span></li>
+                <li className="flex items-center justify-between"><span>{t('New requests')}</span><span className="text-gray-500">{stats.requests}</span></li>
+                <li className="flex items-center justify-between"><span>{t('Quotes issued')}</span><span className="text-gray-500">{stats.quotes}</span></li>
+                <li className="flex items-center justify-between"><span>{t('Invoices generated')}</span><span className="text-gray-500">{stats.invoices}</span></li>
               </ul>
               <div className="mt-4">
                 <button className="btn-secondary" onClick={() => window.location.assign('/admin/analytics')}>
-                  <span className="inline-flex items-center gap-2">View analytics <FiChevronRight /></span>
+                  <span className="inline-flex items-center gap-2">{t('View analytics')} <FiChevronRight /></span>
                 </button>
               </div>
             </div>
@@ -250,7 +250,7 @@ const Dashboard = () => {
           {/* Additional charts: Users & Requests Trends */}
           <div className="card glass">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">New Users Trend</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('New Users Trend')}</h3>
             </div>
             <div className="card-content">
               {usersTrend.length > 0 ? (
@@ -266,21 +266,21 @@ const Dashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v) => `${Number(v || 0)} users`} />
+                      <Tooltip formatter={(v) => `${Number(v || 0)} ${t('users')}`} />
                       <Bar dataKey="count" fill="url(#successGradient)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                  No recent user signups data
+                  {t('No recent user signups data')}
                 </div>
               )}
             </div>
           </div>
           <div className="card glass">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Requests Trend</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('Requests Trend')}</h3>
             </div>
             <div className="card-content">
               {requestsTrend.length > 0 ? (
@@ -296,14 +296,14 @@ const Dashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v) => `${Number(v || 0)} requests`} />
+                      <Tooltip formatter={(v) => `${Number(v || 0)} ${t('requests')}`} />
                       <Bar dataKey="count" fill="url(#warningGradient)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                  No recent requests data
+                  {t('No recent requests data')}
                 </div>
               )}
             </div>
@@ -317,8 +317,8 @@ const Dashboard = () => {
       )}
 
       {/* Coming Soon blocks */}
-      <ComingSoon title="Provider Performance Insights" description="Deeper analytics on provider response times, conversion rates, and category heatmaps." />
-      <ComingSoon title="Automated Risk Monitoring" description="Real-time anomaly detection across payments, messaging, and account activity." />
+      <ComingSoon title={t('Provider Performance Insights')} description={t('Deeper analytics on provider response times, conversion rates, and category heatmaps.')} />
+      <ComingSoon title={t('Automated Risk Monitoring')} description={t('Real-time anomaly detection across payments, messaging, and account activity.')} />
     </div>
   );
 };

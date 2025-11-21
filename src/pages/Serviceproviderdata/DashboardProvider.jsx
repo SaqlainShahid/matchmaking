@@ -4,6 +4,7 @@ import { useProvider } from '../../contexts/ProviderContext';
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Plus, FileText, Clock, CheckCircle, DollarSign } from 'lucide-react';
+import { t } from '../../lib/i18n';
 
 const DashboardProvider = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const DashboardProvider = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="text-gray-500">Loading dashboard...</div>
+        <div className="text-gray-500">{t('Loading dashboard...')}</div>
       </div>
     );
   }
@@ -45,8 +46,8 @@ const DashboardProvider = () => {
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Provider Dashboard</h2>
-            <p className="text-gray-600 mt-2 text-base">Overview of incoming requests and projects</p>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('Provider Dashboard')}</h2>
+            <p className="text-gray-600 mt-2 text-base">{t('Overview of incoming requests and projects')}</p>
             <div className="mt-3 h-1 w-16 bg-blue-600 rounded"></div>
           </div>
           <Button
@@ -54,7 +55,7 @@ const DashboardProvider = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm"
           >
             <Plus className="h-5 w-5 mr-2" />
-            New Quote
+            {t('New Quote')}
           </Button>
         </div>
       </div>
@@ -68,9 +69,9 @@ const DashboardProvider = () => {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-2">{card.title}</p>
+                    <p className="text-sm font-medium text-gray-600 mb-2">{t(card.title)}</p>
                     <p className="text-2xl font-semibold text-gray-900">{card.value}</p>
-                    <p className="text-xs text-gray-500">{card.description}</p>
+                    <p className="text-xs text-gray-500">{t(card.description)}</p>
                   </div>
                   <div className={`p-2 rounded-lg ${
                     card.color === 'blue' ? 'bg-blue-50' :
@@ -95,29 +96,46 @@ const DashboardProvider = () => {
         <CardHeader className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">Latest Requests</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">Requests matching your category and area</p>
+              <CardTitle className="text-lg font-semibold text-gray-900">{t('Latest Requests')}</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">{t('Requests matching your category and area')}</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" className="border-gray-300 text-gray-700">Export</Button>
-              <Button onClick={handleViewProjects} className="bg-gray-900 hover:bg-gray-800 text-white">View Projects</Button>
+              <Button variant="outline" className="border-gray-300 text-gray-700">{t('Export')}</Button>
+              <Button onClick={handleViewProjects} className="bg_gray-900 hover:bg-gray-800 text-white">{t('View Projects')}</Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
             {requests.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No matching requests right now</div>
+              <div className="p-6 text-center text-gray-500">{t('No matching requests right now')}</div>
             ) : (
               requests.slice(0, 8).map((req) => (
                 <div key={req.id} className="p-4 flex items-center justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{req.title || 'Service Request'}</p>
-                    <p className="text-sm text-gray-500">{req.serviceType} • {req.priority}</p>
+                    <p className="font-medium text-gray-900 truncate">{req.title || t('Service Request')}</p>
+                    <p className="text-sm text-gray-500">{({
+                      plomberie_chauffage: t('Plomberie & Chauffage'),
+                      electricite_domotique: t('Électricité & Domotique'),
+                      menuiserie_amenagement: t('Menuiserie & Aménagement'),
+                      maconnerie_gros_oeuvre: t('Maçonnerie & Gros Œuvre'),
+                      peinture_finitions: t('Peinture & Finitions'),
+                      sols_revetements: t('Sols & Revêtements'),
+                      chauffage_ventilation_climatisation: t('Chauffage, Ventilation & Climatisation'),
+                      serrurerie_securite: t('Serrurerie & Sécurité'),
+                      toiture_couverture: t('Toiture & Couverture'),
+                      jardin_exterieur: t('Jardin & Extérieur'),
+                      renovation_energetique_isolation: t('Rénovation Énergétique & Isolation'),
+                      services_complementaires_coordination: t('Services Complémentaires & Coordination')
+                    }[req.serviceType] || req.serviceType)} • {({
+                      urgence_depannage: t('Urgence / Dépannage'),
+                      urgent_sur_devis: t('Urgent sur devis'),
+                      travaux_importants: t('Travaux plus importants')
+                    }[req.priority] || req.priority)}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => navigate(`/provider/requests?open=${req.id}`)}>View</Button>
-                    <Button onClick={() => handleSendQuote(req.id)}>Send Quote</Button>
+                    <Button variant="outline" onClick={() => navigate(`/provider/requests?open=${req.id}`)}>{t('View')}</Button>
+                    <Button onClick={() => handleSendQuote(req.id)}>{t('Send Quote')}</Button>
                   </div>
                 </div>
               ))
@@ -129,14 +147,14 @@ const DashboardProvider = () => {
       {/* Quick Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h3 className="font-medium mb-2">Projects in Progress</h3>
-          <p className="text-sm text-gray-500">Track and update project progress</p>
-          <Button variant="outline" className="mt-3" onClick={handleViewProjects}>Manage Projects</Button>
+          <h3 className="font-medium mb-2">{t('Projects in Progress')}</h3>
+          <p className="text-sm text-gray-500">{t('Track and update project progress')}</p>
+          <Button variant="outline" className="mt-3" onClick={handleViewProjects}>{t('Manage Projects')}</Button>
         </Card>
         <Card className="p-4">
-          <h3 className="font-medium mb-2">Invoices Summary</h3>
-          <p className="text-sm text-gray-500">View earnings and invoices</p>
-          <Button variant="outline" className="mt-3" onClick={handleViewInvoices}>View Invoices</Button>
+          <h3 className="font-medium mb-2">{t('Invoices Summary')}</h3>
+          <p className="text-sm text-gray-500">{t('View earnings and invoices')}</p>
+          <Button variant="outline" className="mt-3" onClick={handleViewInvoices}>{t('View Invoices')}</Button>
         </Card>
       </div>
     </div>

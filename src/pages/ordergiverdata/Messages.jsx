@@ -36,6 +36,7 @@ import {
   FiCheckCircle
 } from 'react-icons/fi';
 import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
+import { t } from '../../lib/i18n';
 
 const Messages = () => {
   const { search } = useLocation();
@@ -101,7 +102,7 @@ const Messages = () => {
               if (otherId && !names[otherId]) {
                 try {
                   const other = await getUserById(otherId);
-                  const display = other?.displayName || other?.companyName || 'Unknown User';
+                  const display = other?.displayName || other?.companyName || t('Unknown User');
                   names[otherId] = display;
                   profiles[otherId] = { 
                     name: display, 
@@ -111,8 +112,8 @@ const Messages = () => {
                   };
                 } catch (error) {
                   console.warn('Failed to load user:', otherId, error);
-                  names[otherId] = 'Unknown User';
-                  profiles[otherId] = { name: 'Unknown User', photoURL: '', companyName: '' };
+                  names[otherId] = t('Unknown User');
+                  profiles[otherId] = { name: t('Unknown User'), photoURL: '', companyName: '' };
                 }
               }
             })
@@ -198,11 +199,11 @@ const Messages = () => {
           const other = await getUserById(otherId);
           setOtherUser(other ? { 
             id: otherId, 
-            name: other.displayName || other.companyName || 'Unknown User', 
+            name: other.displayName || other.companyName || t('Unknown User'), 
             photoURL: other.photoURL || '', 
             companyName: other.companyName || '',
             role: other.role || 'user'
-          } : { id: otherId, name: 'Unknown User' });
+          } : { id: otherId, name: t('Unknown User') });
         }
       }
     } catch (error) {
@@ -272,7 +273,7 @@ const Messages = () => {
 
   // Message actions
   const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    if (!window.confirm(t('Are you sure you want to delete this message?'))) return;
     try {
       await deleteMessage(activeConvId, messageId);
       setSelectedMessage(null);
@@ -297,7 +298,7 @@ const Messages = () => {
     if (isToday(date)) {
       return format(date, 'HH:mm');
     } else if (isYesterday(date)) {
-      return 'Yesterday';
+      return t('Yesterday');
     } else if (isThisWeek(date)) {
       return format(date, 'EEE');
     } else {
@@ -313,7 +314,7 @@ const Messages = () => {
     if (isToday(date)) {
       return format(date, 'HH:mm');
     } else if (isYesterday(date)) {
-      return 'Yesterday';
+      return t('Yesterday');
     } else {
       return format(date, 'MMM dd');
     }
@@ -323,11 +324,11 @@ const Messages = () => {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-          <p className="text-gray-600">Communicate with your service providers</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('Messages')}</h1>
+          <p className="text-gray-600">{t('Communicate with your service providers')}</p>
         </div>
         <Badge variant="secondary" className="text-sm">
-          {conversations.length} Conversations
+          {conversations.length} {t('Conversations')}
         </Badge>
       </div>
 
@@ -338,26 +339,26 @@ const Messages = () => {
             <div className="relative">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search conversations..."
+                placeholder={t('Search conversations...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
             <div className="flex gap-2">
-              <Button variant={activeTab === 'active' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('active')}>Active</Button>
-              <Button variant={activeTab === 'archived' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('archived')}>Archived</Button>
+              <Button variant={activeTab === 'active' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('active')}>{t('Active')}</Button>
+              <Button variant={activeTab === 'archived' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTab('archived')}>{t('Archived')}</Button>
             </div>
           </CardHeader>
           
           <ScrollArea className="flex-1">
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="p-4 text-center text-gray-500">Loading conversations...</div>
+                <div className="p-4 text-center text-gray-500">{t('Loading conversations...')}</div>
               ) : filteredConversations.length === 0 ? (
                 <div className="p-8 text-center">
-                  <div className="text-gray-400 mb-2">No conversations</div>
-                  <div className="text-sm text-gray-500">Start a conversation with a service provider</div>
+                  <div className="text-gray-400 mb-2">{t('No conversations')}</div>
+                  <div className="text-sm text-gray-500">{t('Start a conversation with a service provider')}</div>
                 </div>
               ) : (
                 filteredConversations.map((conv) => {
@@ -386,7 +387,7 @@ const Messages = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-1">
                             <div className="font-semibold text-gray-900 truncate text-sm">
-                              {profile?.name || 'Unknown User'}
+                              {profile?.name || t('Unknown User')}
                             </div>
                             <div className="flex items-center gap-1 ml-2">
                               {unreadCount > 0 && (
@@ -401,7 +402,7 @@ const Messages = () => {
                           </div>
                           
                           <div className="text-xs text-gray-600 truncate mb-1">
-                            {conv.lastMessage?.text || 'No messages yet'}
+                            {conv.lastMessage?.text || t('No messages yet')}
                           </div>
                           
                           {profile?.companyName && (
@@ -436,7 +437,7 @@ const Messages = () => {
                       {otherUser.name}
                       {typingOther && (
                         <Badge variant="outline" className="text-xs animate-pulse">
-                          Typing...
+                          {t('Typing...')}
                         </Badge>
                       )}
                     </CardTitle>
@@ -454,12 +455,12 @@ const Messages = () => {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleArchiveConversation(activeConvId)}>
                     <FiArchive className="h-4 w-4 mr-1" />
-                    Archive
+                    {t('Archive')}
                   </Button>
                 </div>
               </div>
             ) : (
-              <CardTitle>Select a conversation</CardTitle>
+              <CardTitle>{t('Select a conversation')}</CardTitle>
             )}
           </CardHeader>
 
@@ -471,8 +472,8 @@ const Messages = () => {
                   <div className="space-y-4">
                     {messages.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
-                        <div className="text-lg font-semibold mb-2">No messages yet</div>
-                        <div className="text-sm">Start the conversation by sending a message</div>
+                        <div className="text-lg font-semibold mb-2">{t('No messages yet')}</div>
+                        <div className="text-sm">{t('Start the conversation by sending a message')}</div>
                       </div>
                     ) : (
                       messages.map((message, index) => {
@@ -556,7 +557,7 @@ const Messages = () => {
                                       Array.isArray(message.readBy) && otherUser?.id && message.readBy.includes(otherUser.id) ? (
                                         <span className="flex items-center gap-1 text-xs text-blue-100">
                                           <FiCheckCircle className="h-3 w-3" />
-                                          Seen
+                                          {t('Seen')}
                                         </span>
                                       ) : (
                                         <FiCheck className="h-3 w-3" />
@@ -622,7 +623,7 @@ const Messages = () => {
                     </Button>
                     
                     <Input
-                      placeholder="Type your message..."
+                      placeholder={t('Type your message...')}
                       value={text}
                       onChange={(e) => handleTyping(e.target.value)}
                       className="flex-1"
@@ -641,8 +642,8 @@ const Messages = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <div className="text-lg font-semibold mb-2">No conversation selected</div>
-                  <div className="text-sm">Choose a conversation from the list to start messaging</div>
+                  <div className="text-lg font-semibold mb-2">{t('No conversation selected')}</div>
+                  <div className="text-sm">{t('Choose a conversation from the list to start messaging')}</div>
                 </div>
               </div>
             )}
@@ -668,7 +669,7 @@ const Messages = () => {
               onClick={() => handleDeleteMessage(selectedMessage.id)}
             >
               <FiTrash2 className="h-4 w-4" />
-              Delete Message
+              {t('Delete Message')}
             </button>
           </div>
         </div>

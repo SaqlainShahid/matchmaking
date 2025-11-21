@@ -8,6 +8,7 @@ import {
 import { auth, provider, db } from "../firebaseConfig";
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { t } from '../lib/i18n';
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ export default function Signup() {
     e.preventDefault();
 
     if (!email || !password || !fullName || !phone) {
-      setError("Please fill in all required fields");
+      setError(t("Please fill in all required fields"));
       return;
     }
 
@@ -64,7 +65,7 @@ export default function Signup() {
 
       // Show verify modal instead of alert
       setShowVerifyModal(true);
-      setResendMessage("We sent a verification email. Please check your inbox.");
+      setResendMessage(t("We sent a verification email. Please check your inbox."));
     } catch (error) {
       setError(error.message);
     } finally {
@@ -76,7 +77,7 @@ export default function Signup() {
     try {
       // Require core profile fields before Google signup
       if (!fullName || !phone) {
-        setError("Please fill in Full Name and Phone before signing up with Google");
+        setError(t("Please fill in Full Name and Phone before signing up with Google"));
         return;
       }
 
@@ -88,7 +89,7 @@ export default function Signup() {
       const userRef = doc(db, "users", user.uid);
       const snap = await getDoc(userRef);
       if (snap.exists()) {
-        setError("An account already exists for this Google account. Please sign in.");
+        setError(t("An account already exists for this Google account. Please sign in."));
         navigate("/login");
         return;
       }
@@ -172,7 +173,7 @@ export default function Signup() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              Create Your Account
+              {t('Create Your Account')}
             </motion.h2>
             <motion.p 
               className="text-gray-600"
@@ -180,7 +181,7 @@ export default function Signup() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Join us today and get started
+              {t('Join us today and get started')}
             </motion.p>
           </div>
 
@@ -208,13 +209,13 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 }}
                     >
-                      <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                      <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">{t('Full Name *')}</label>
                       <input
                         id="fullName"
                         type="text"
                         required
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Enter your full name"
+                        placeholder={t('Enter your full name')}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                       />
@@ -224,13 +225,13 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 }}
                     >
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">{t('Phone *')}</label>
                       <input
                         id="phone"
                         type="tel"
                         required
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Your phone number"
+                        placeholder={t('Your phone number')}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                       />
@@ -243,12 +244,12 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.6 }}
                     >
-                      <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                      <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">{t('Company')}</label>
                       <input
                         id="company"
                         type="text"
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Your company (optional)"
+                        placeholder={t('Your company (optional)')}
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
                       />
@@ -258,12 +259,12 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.7 }}
                     >
-                      <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                      <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">{t('City')}</label>
                       <input
                         id="city"
                         type="text"
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Your city (optional)"
+                        placeholder={t('Your city (optional)')}
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                       />
@@ -276,14 +277,14 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.8 }}
                     >
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">{t('Email *')}</label>
                       <input
                         id="email"
                         type="email"
                         autoComplete="email"
                         required
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="you@example.com"
+                        placeholder={t('you@example.com')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
@@ -293,14 +294,14 @@ export default function Signup() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.9 }}
                     >
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">{t('Password *')}</label>
                       <input
                         id="password"
                         type="password"
                         autoComplete="new-password"
                         required
                         className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Create a password"
+                        placeholder={t('Create a password')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
@@ -312,15 +313,15 @@ export default function Signup() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.0 }}
                   >
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">{t('Role *')}</label>
                     <select
                       id="role"
                       className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
                     >
-                      <option value="order_giver">Order Giver</option>
-                      <option value="service_provider">Service Provider</option>
+                      <option value="order_giver">{t('Order Giver')}</option>
+                      <option value="service_provider">{t('Service Provider')}</option>
                     </select>
                   </motion.div>
 
@@ -345,10 +346,10 @@ export default function Signup() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Creating Account...
+                          {t('Creating Account...')}
                         </div>
                       ) : (
-                        'Create Account'
+                        t('Create Account')
                       )}
                     </span>
                   </motion.button>
@@ -364,7 +365,7 @@ export default function Signup() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                   >
-                    Quick Sign Up
+                    {t('Quick Sign Up')}
                   </motion.h3>
                   <motion.p 
                     className="text-gray-600 text-sm"
@@ -372,7 +373,7 @@ export default function Signup() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Use your Google account to get started
+                    {t('Use your Google account to get started')}
                   </motion.p>
                 </div>
 
@@ -397,7 +398,7 @@ export default function Signup() {
                     <path fill="#4CAF50" d="M24,44c5.516,0,10.474-2.105,14.227-5.544l-6.564-5.548C29.694,34.943,26.981,36,24,36 c-5.632,0-10.45-4.088-11.275-9.448l-6.591,5.061C8.016,39.05,15.433,44,24,44z"/>
                     <path fill="#1976D2" d="M43.611,20.083h-1.318V20H24v8h11.303C34.494,31.885,29.661,36,24,36c-5.118,0-9.426-3.271-10.975-7.854 l-6.591,5.061C8.016,39.05,15.433,44,24,44c11.045,0,20-8.955,20-20C44,22.651,43.862,21.354,43.611,20.083z"/>
                   </svg>
-                  <span className="font-medium">Sign up with Google</span>
+                  <span className="font-medium">{t('Sign up with Google')}</span>
                 </motion.button>
 
                 {/* Divider */}
@@ -408,7 +409,7 @@ export default function Signup() {
                   transition={{ delay: 0.7 }}
                 >
                   <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="flex-shrink mx-4 text-gray-500 text-sm">OR</span>
+                  <span className="flex-shrink mx-4 text-gray-500 text-sm">{t('OR')}</span>
                   <div className="flex-grow border-t border-gray-300"></div>
                 </motion.div>
 
@@ -420,13 +421,13 @@ export default function Signup() {
                   transition={{ delay: 0.8 }}
                 >
                   <p className="text-sm text-gray-600">
-                    Already have an account?{' '}
+                    {t('Already have an account?')}{' '}
                     <button
                       type="button"
                       onClick={() => navigate('/login')}
                       className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
                     >
-                      Sign in here
+                      {t('Sign in here')}
                     </button>
                   </p>
                 </motion.div>
@@ -450,11 +451,11 @@ export default function Signup() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Verify your email</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('Verify your email')}</h2>
             </div>
             <p className="text-gray-600 text-center mb-4">
-              We sent a verification link to <span className="font-medium text-blue-600">{email}</span>.
-              Please check your inbox and verify your email to continue.
+              {t('We sent a verification link to')} <span className="font-medium text-blue-600">{email}</span>.
+              {t('Please check your inbox and verify your email to continue.')}
             </p>
             {resendMessage && (
               <p className="text-sm text-green-600 text-center mb-4">{resendMessage}</p>
@@ -467,7 +468,7 @@ export default function Signup() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Go to Login
+                {t('Go to Login')}
               </motion.button>
               <motion.button
                 type="button"
@@ -478,9 +479,9 @@ export default function Signup() {
                     const current = auth.currentUser;
                     if (current) {
                       await sendEmailVerification(current);
-                      setResendMessage("Verification email resent successfully!");
+                      setResendMessage(t("Verification email resent successfully!"));
                     } else {
-                      setResendMessage("Session expired. Please sign up again.");
+                      setResendMessage(t("Session expired. Please sign up again."));
                     }
                   } catch (err) {
                     setResendMessage(err.message);
@@ -493,7 +494,7 @@ export default function Signup() {
                 whileHover={{ scale: resendLoading ? 1 : 1.02 }}
                 whileTap={{ scale: resendLoading ? 1 : 0.98 }}
               >
-                {resendLoading ? 'Resending...' : 'Resend Email'}
+                {resendLoading ? t('Resending...') : t('Resend Email')}
               </motion.button>
             </div>
           </motion.div>

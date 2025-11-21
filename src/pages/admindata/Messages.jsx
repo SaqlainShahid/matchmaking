@@ -6,6 +6,7 @@ import { ScrollArea } from '../../components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { getAllUsers } from '../../services/adminService';
 import { getOrCreateConversation, subscribeToMessages, sendMessage, setTyping } from '../../services/messageService';
+import { t } from '../../lib/i18n';
 
 const AdminMessages = () => {
   const [users, setUsers] = useState([]);
@@ -19,7 +20,7 @@ const AdminMessages = () => {
 
   useEffect(() => {
     const loadUsers = async () => {
-      try { const list = await getAllUsers(); setUsers(Array.isArray(list) ? list : []); } catch (_) {}
+      try { const list = await getAllUsers(); setUsers(Array.isArray(list) ? list : []); } catch (e) { console.error(e); }
     };
     loadUsers();
   }, []);
@@ -31,24 +32,24 @@ const AdminMessages = () => {
         const convo = await getOrCreateConversation(selectedUser.id);
         const id = convo?.id || convo?.conversationId || convo;
         setConversationId(id);
-      } catch (_) {}
+      } catch (e) { console.error(e); }
     };
     setupConversation();
   }, [selectedUser]);
 
   useEffect(() => {
     if (!conversationId) return;
-    if (unsubRef.current) { try { unsubRef.current(); } catch (_) {} }
+    if (unsubRef.current) { try { unsubRef.current(); } catch (e) { console.error(e); } }
     unsubRef.current = subscribeToMessages(conversationId, (list) => {
       setMessages(Array.isArray(list) ? list : []);
     });
-    return () => { if (unsubRef.current) { try { unsubRef.current(); } catch (_) {} } };
+    return () => { if (unsubRef.current) { try { unsubRef.current(); } catch (e) { console.error(e); } } };
   }, [conversationId]);
 
   const onSend = async () => {
     if (!conversationId || !text.trim()) return;
     setSending(true);
-    try { await sendMessage(conversationId, { text: text.trim() }); setText(''); } catch (_) {}
+    try { await sendMessage(conversationId, { text: text.trim() }); setText(''); } catch (e) { console.error(e); }
     finally { setSending(false); }
   };
 
@@ -62,10 +63,10 @@ const AdminMessages = () => {
       <div className="md:col-span-1 space-y-4">
         <Card className="card">
           <CardHeader className="card-header">
-            <CardTitle>Users</CardTitle>
+            <CardTitle>{t('Users')}</CardTitle>
           </CardHeader>
           <CardContent className="card-content space-y-3">
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search users by name or email" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('Search users by name or email')} />
             <ScrollArea className="h-[420px]">
               <ul className="space-y-2">
                 {filteredUsers.map((u) => (
@@ -77,7 +78,7 @@ const AdminMessages = () => {
                       <Avatar className="h-8 w-8"><AvatarFallback>{(u.name||u.email||'U')[0].toUpperCase()}</AvatarFallback></Avatar>
                       <div className="text-left">
                         <div className="text-sm font-medium text-gray-900">{u.name || u.email || u.id}</div>
-                        <div className="text-xs text-gray-500">{u.role || 'user'}</div>
+                        <div className="text-xs text-gray-500">{u.role || t('User')}</div>
                       </div>
                     </button>
                   </li>
@@ -91,25 +92,25 @@ const AdminMessages = () => {
       <div className="md:col-span-2 space-y-4">
         <Card className="card">
           <CardHeader className="card-header">
-            <CardTitle>Conversation</CardTitle>
+            <CardTitle>{t('Conversation')}</CardTitle>
           </CardHeader>
           <CardContent className="card-content">
             {!selectedUser ? (
-              <div className="text-sm text-gray-500">Select a user to start a conversation.</div>
+              <div className="text-sm text-gray-500">{t('Select a user to start a conversation.')}</div>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9"><AvatarFallback>{(selectedUser.name||selectedUser.email||'U')[0].toUpperCase()}</AvatarFallback></Avatar>
                   <div>
                     <div className="text-sm font-medium text-gray-900">{selectedUser.name || selectedUser.email || selectedUser.id}</div>
-                    <div className="text-xs text-gray-500">{selectedUser.role || 'user'}</div>
+                        <div className="text-xs text-gray-500">{selectedUser.role || t('User')}</div>
                   </div>
                 </div>
                 <div className="border rounded-lg">
                   <ScrollArea className="h-[360px] p-3">
                     <div className="space-y-2">
                       {messages.length === 0 ? (
-                        <div className="text-sm text-gray-500">No messages yet.</div>
+                        <div className="text-sm text-gray-500">{t('No messages yet')}</div>
                       ) : messages.map((m) => (
                         <div key={m.id || m.createdAt} className={`max-w-[70%] p-2 rounded-md ${m.senderId===selectedUser.id?'bg-gray-100':'bg-blue-50 ml-auto'}`}>
                           <div className="text-sm text-gray-800 whitespace-pre-wrap">{m.text}</div>
@@ -121,10 +122,10 @@ const AdminMessages = () => {
                   <div className="p-3 border-t flex items-center gap-2">
                     <Input
                       value={text}
-                      onChange={(e) => { setText(e.target.value); try { setTyping(conversationId, true); } catch (_) {} }}
-                      placeholder="Type a message"
+                      onChange={(e) => { setText(e.target.value); try { setTyping(conversationId, true); } catch (e) { console.error(e); } }}
+                      placeholder={t('Type a message')}
                     />
-                    <Button onClick={onSend} disabled={sending || !text.trim()} className="btn-primary">Send</Button>
+                    <Button onClick={onSend} disabled={sending || !text.trim()} className="btn-primary">{t('Send')}</Button>
                   </div>
                 </div>
               </div>

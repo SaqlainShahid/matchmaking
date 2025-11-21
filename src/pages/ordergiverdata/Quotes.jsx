@@ -11,6 +11,7 @@ import { Input } from "../../components/ui/input";
 import { Search, Clock, Check, X, MessageSquare, DollarSign, AlertCircle, CheckCircle, Clock as ClockIcon, FileText } from 'lucide-react';
 import { Skeleton } from "../../components/ui/skeleton";
 import StripePayment from "../../components/StripePayment";
+import { t } from '../../lib/i18n';
 
 const Quotes = () => {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ const Quotes = () => {
 
   const handleAcceptQuote = async (e, quoteId) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to accept this quote?')) {
+    if (window.confirm(t('Are you sure you want to accept this quote?'))) {
       try {
         await acceptQuote(quoteId);
         await loadQuotes(activeTab);
@@ -94,7 +95,7 @@ const Quotes = () => {
 
   const handleRejectQuote = async (e, quoteId) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to reject this quote?')) {
+    if (window.confirm(t('Are you sure you want to reject this quote?'))) {
       try {
         await rejectQuote(quoteId);
         await loadQuotes(activeTab);
@@ -165,27 +166,27 @@ const Quotes = () => {
   const getStatusBadge = (status) => {
     const statusMap = {
       pending: { 
-        text: 'Pending', 
+        text: t('Pending'), 
         className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
         icon: <ClockIcon className="h-4 w-4 mr-1" />
       },
       accepted: { 
-        text: 'Accepted', 
+        text: t('Accepted'), 
         className: 'bg-green-100 text-green-800 hover:bg-green-200',
         icon: <CheckCircle className="h-4 w-4 mr-1" />
       },
       rejected: { 
-        text: 'Rejected', 
+        text: t('Rejected'), 
         className: 'bg-red-100 text-red-800 hover:bg-red-200',
         icon: <X className="h-4 w-4 mr-1" />
       },
       expired: { 
-        text: 'Expired', 
+        text: t('Expired'), 
         className: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
         icon: <ClockIcon className="h-4 w-4 mr-1" />
       }
     };
-    return statusMap[status] || { text: status, className: 'bg-gray-100' };
+    return statusMap[status] || { text: t(status), className: 'bg-gray-100' };
   };
 
   if (loading && quotes.length === 0) {
@@ -204,14 +205,14 @@ const Quotes = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-2xl font-semibold mb-4 md:mb-0" style={{ color: 'var(--text-dark)' }}>Quotes</h1>
+        <h1 className="text-2xl font-semibold mb-4 md:mb-0" style={{ color: 'var(--text-dark)' }}>{t('Quotes')}</h1>
         <div className="relative w-full md:w-80">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <Input
             type="text"
-            placeholder="Search quotes..."
+            placeholder={t('Search quotes...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 w-full bg-[var(--card-white)] border border-[var(--border-gray)]"
@@ -233,10 +234,10 @@ const Quotes = () => {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="accepted">Accepted</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="expired">Expired</TabsTrigger>
+          <TabsTrigger value="pending">{t('Pending')}</TabsTrigger>
+          <TabsTrigger value="accepted">{t('Accepted')}</TabsTrigger>
+          <TabsTrigger value="rejected">{t('Rejected')}</TabsTrigger>
+          <TabsTrigger value="expired">{t('Expired')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value={activeTab} className="mt-6">
@@ -246,11 +247,11 @@ const Quotes = () => {
                 <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
                   <AlertCircle className="h-12 w-12 mx-auto" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No {activeTab} quotes found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">{t('No quotes found')}</h3>
                 <p className="text-sm text-gray-500">
                   {activeTab === 'pending' 
-                    ? 'You don\'t have any pending quotes at the moment.'
-                    : `You don't have any ${activeTab} quotes.`}
+                    ? t('You don’t have any pending quotes at the moment.')
+                    : t('You don’t have any quotes for this status.')}
                 </p>
               </CardContent>
             </Card>
@@ -272,7 +273,7 @@ const Quotes = () => {
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg flex-1 truncate">
-                            {quote.requestTitle || 'Untitled Request'}
+                            {quote.requestTitle || t('Untitled Request')}
                           </CardTitle>
                           <Badge className={status.className}>
                             {status.icon}
@@ -282,21 +283,21 @@ const Quotes = () => {
                       </CardHeader>
                       <CardContent className="pb-2">
                         <div className="flex items-center text-sm text-gray-600 mb-2">
-                          <span className="font-medium">Provider:</span>
-                          <span className="ml-2">{quote.providerName || 'Unknown'}</span>
+                          <span className="font-medium">{t('Provider')}:</span>
+                          <span className="ml-2">{quote.providerName || t('Unknown')}</span>
                         </div>
                         <div className="flex items-center text-sm text-gray-600 mb-2">
                           <DollarSign className="h-4 w-4 mr-1 text-green-600" />
                           <span className="font-semibold text-gray-900">${(quote.amount ?? quote.price ?? 0).toLocaleString?.() || (quote.amount ?? quote.price ?? 0)}</span>
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-2">
-                          {quote.note || quote.message || 'No message provided'}
+                          {quote.note || quote.message || t('No message provided')}
                         </p>
                       </CardContent>
                       <CardFooter className="pt-2 pb-4">
                         <div className="w-full flex justify-between items-center text-xs text-gray-500">
                           <span>
-                            Submitted {
+                            {t('Submitted')} {
                               (() => {
                                 const d = (quote?.createdAt && typeof quote.createdAt === 'object' && typeof quote.createdAt.toDate === 'function')
                                   ? quote.createdAt.toDate()
@@ -316,7 +317,7 @@ const Quotes = () => {
                                 className="text-red-600 hover:bg-red-50"
                               >
                                 <X className="h-3.5 w-3.5 mr-1" />
-                                Reject
+                                {t('Reject')}
                               </Button>
                               <Button 
                                 size="sm" 
@@ -324,7 +325,7 @@ const Quotes = () => {
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <Check className="h-3.5 w-3.5 mr-1" />
-                                Accept
+                                {t('Accept')}
                               </Button>
                             </div>
                           )}
@@ -335,7 +336,7 @@ const Quotes = () => {
                                 onClick={() => { setSelectedQuote(quote); setShowPayModal(true); }}
                                 className="bg-blue-600 hover:bg-blue-700"
                               >
-                                Pay Now
+                                {t('Pay Now')}
                               </Button>
                             </div>
                           )}
@@ -354,7 +355,7 @@ const Quotes = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-xl">
-                            {selectedQuote.requestTitle || 'Quote Details'}
+                            {selectedQuote.requestTitle || t('Quote Details')}
                           </CardTitle>
                           <div className="flex items-center mt-2">
                             <Badge className={getStatusBadge(selectedQuote.status).className}>
@@ -362,7 +363,7 @@ const Quotes = () => {
                               {getStatusBadge(selectedQuote.status).text}
                             </Badge>
                             <span className="text-sm text-gray-500 ml-2">
-                              Submitted {
+                              {t('Submitted')} {
                                 (() => {
                                   const v = selectedQuote?.createdAt;
                                   const d = (v && typeof v === 'object' && typeof v.toDate === 'function')
@@ -380,7 +381,7 @@ const Quotes = () => {
                             size="sm"
                             onClick={() => handleViewRequest(selectedQuote.requestId)}
                           >
-                            View Request
+                            {t('View Request')}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -388,7 +389,7 @@ const Quotes = () => {
                             onClick={() => handleMessageProvider(selectedQuote.providerId)}
                           >
                             <MessageSquare className="h-4 w-4 mr-2" />
-                            Message
+                            {t('Message')}
                           </Button>
                         </div>
                       </div>
@@ -396,34 +397,34 @@ const Quotes = () => {
                     <CardContent className="pt-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h3 className="font-medium text-gray-900 mb-3">Provider Details</h3>
+                          <h3 className="font-medium text-gray-900 mb-3">{t('Provider Details')}</h3>
                           <div className="space-y-3">
                             <div>
-                              <p className="text-sm text-gray-500">Provider</p>
-                              <p className="text-sm font-medium">{selectedQuote.providerName || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">{t('Provider')}</p>
+                              <p className="text-sm font-medium">{selectedQuote.providerName || t('N/A')}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Company</p>
-                              <p className="text-sm font-medium">{selectedQuote.companyName || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">{t('Company')}</p>
+                              <p className="text-sm font-medium">{selectedQuote.companyName || t('N/A')}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Email</p>
-                              <p className="text-sm font-medium">{selectedQuote.providerEmail || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">{t('Email')}</p>
+                              <p className="text-sm font-medium">{selectedQuote.providerEmail || t('N/A')}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Phone</p>
+                              <p className="text-sm text-gray-500">{t('Phone')}</p>
                               <p className="text-sm font-medium">
-                                {selectedQuote.phoneNumber || 'N/A'}
+                                {selectedQuote.phoneNumber || t('N/A')}
                               </p>
                             </div>
                           </div>
                         </div>
 
                         <div>
-                          <h3 className="font-medium text-gray-900 mb-3">Quote Details</h3>
+                          <h3 className="font-medium text-gray-900 mb-3">{t('Quote Details')}</h3>
                           <div className="space-y-3">
                             <div className="flex justify-between">
-                              <span className="text-sm text-gray-500">Quote Amount</span>
+                              <span className="text-sm text-gray-500">{t('Quote Amount')}</span>
                               <span className="text-sm font-semibold">
                                 ${(() => {
                                   const amt = selectedQuote?.amount ?? selectedQuote?.price ?? 0;
@@ -432,26 +433,26 @@ const Quotes = () => {
                               </span>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Estimated Completion</p>
+                              <p className="text-sm text-gray-500">{t('Estimated Completion')}</p>
                               <p className="text-sm font-medium">
                                 {(() => {
                                   const v = selectedQuote?.estimatedCompletion;
                                   const d = (v && typeof v === 'object' && typeof v.toDate === 'function')
                                     ? v.toDate()
                                     : (v instanceof Date ? v : null);
-                                  return d ? format(d, 'MMM d, yyyy') : 'Not specified';
+                                  return d ? format(d, 'MMM d, yyyy') : t('Not specified');
                                 })()}
                               </p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Expires On</p>
+                              <p className="text-sm text-gray-500">{t('Expires On')}</p>
                               <p className="text-sm font-medium">
                                 {(() => {
                                   const v = selectedQuote?.expiresAt;
                                   const d = (v && typeof v === 'object' && typeof v.toDate === 'function')
                                     ? v.toDate()
                                     : (v instanceof Date ? v : null);
-                                  return d ? format(d, 'MMM d, yyyy') : 'Not specified';
+                                  return d ? format(d, 'MMM d, yyyy') : t('Not specified');
                                 })()}
                               </p>
                             </div>
@@ -460,10 +461,10 @@ const Quotes = () => {
                       </div>
 
                       <div className="mt-8">
-                        <h3 className="font-medium text-gray-900 mb-3">Message from Provider</h3>
+                        <h3 className="font-medium text-gray-900 mb-3">{t('Message from Provider')}</h3>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <p className="text-sm text-gray-700">
-                            {selectedQuote.note || selectedQuote.message || 'No message provided.'}
+                            {selectedQuote.note || selectedQuote.message || t('No message provided')}
                           </p>
                         </div>
                       </div>
@@ -486,10 +487,10 @@ const Quotes = () => {
                                   </div>
                                   <div className="truncate">
                                     <p className="text-sm font-medium truncate">
-                                      {attachment.name || `Document ${index + 1}`}
+                                      {attachment.name || `${t('Document')} ${index + 1}`}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                      {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
+                                      {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : t('Unknown size')}
                                     </p>
                                   </div>
                                 </div>
@@ -508,14 +509,14 @@ const Quotes = () => {
                             className="text-red-600 hover:bg-red-50"
                           >
                             <X className="h-4 w-4 mr-2" />
-                            Reject Quote
+                            {t('Reject Quote')}
                           </Button>
                           <Button 
                             onClick={() => navigate(`/checkout?quoteId=${selectedQuote.id}`, { state: { quote: selectedQuote } })}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <Check className="h-4 w-4 mr-2" />
-                            Accept & Pay
+                            {t('Accept & Pay')}
                           </Button>
                         </>
                       )}
@@ -523,21 +524,21 @@ const Quotes = () => {
                         <div className="w-full flex items-center justify-between">
                           <Alert className="bg-green-50 border-green-200 w-full mr-3">
                             <CheckCircle className="h-5 w-5 text-green-600" />
-                            <AlertTitle>Quote Accepted</AlertTitle>
+                            <AlertTitle>{t('Quote Accepted')}</AlertTitle>
                             <AlertDescription className="text-green-700">
-                              You've accepted this quote.
+                              {t("You've accepted this quote.")}
                             </AlertDescription>
                           </Alert>
-                          <Button onClick={() => setShowPayModal(true)} className="bg-blue-600 hover:bg-blue-700">Pay Now</Button>
+                          <Button onClick={() => setShowPayModal(true)} className="bg-blue-600 hover:bg-blue-700">{t('Pay Now')}</Button>
                         </div>
                       )}
                       {selectedQuote.status === 'rejected' && (
                         <div className="w-full">
                           <Alert variant="destructive">
                             <X className="h-5 w-5" />
-                            <AlertTitle>Quote Rejected</AlertTitle>
+                            <AlertTitle>{t('Quote Rejected')}</AlertTitle>
                             <AlertDescription>
-                              You've rejected this quote on {format(selectedQuote.updatedAt?.toDate(), 'MMM d, yyyy')}.
+                              {t('You rejected this quote on')} {format(selectedQuote.updatedAt?.toDate(), 'MMM d, yyyy')}.
                             </AlertDescription>
                           </Alert>
                         </div>
@@ -550,9 +551,9 @@ const Quotes = () => {
                       <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
                         <AlertCircle className="h-12 w-12 mx-auto" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">No quote selected</h3>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">{t('No quote selected')}</h3>
                       <p className="text-sm text-gray-500">
-                        Select a quote from the list to view details and take action.
+                        {t('Select a quote from the list to view details and take action.')}
                       </p>
                     </div>
                   </Card>
@@ -566,15 +567,15 @@ const Quotes = () => {
       {showPayModal && selectedQuote && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2">Demo Payment</h3>
-            <p className="text-sm text-gray-700">You are paying for the accepted quote.</p>
+            <h3 className="text-lg font-semibold mb-2">{t('Demo Payment')}</h3>
+            <p className="text-sm text-gray-700">{t('You are paying for the accepted quote.')}</p>
             <div className="mt-4 text-sm text-gray-600 space-y-2">
-              <div className="flex justify-between"><span>Provider</span><span className="font-medium">{selectedQuote.providerName}</span></div>
-              <div className="flex justify-between"><span>Amount</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
+              <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{selectedQuote.providerName}</span></div>
+              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
             </div>
             <div className="mt-6 flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowPayModal(false)}>Close</Button>
-              <Button onClick={handlePayNow} disabled={paying} className="bg-blue-600 hover:bg-blue-700">{paying ? 'Processing...' : 'Confirm Payment'}</Button>
+              <Button variant="outline" onClick={() => setShowPayModal(false)}>{t('Close')}</Button>
+              <Button onClick={handlePayNow} disabled={paying} className="bg-blue-600 hover:bg-blue-700">{paying ? t('Processing...') : t('Confirm Payment')}</Button>
             </div>
           </div>
         </div>
@@ -583,11 +584,11 @@ const Quotes = () => {
       {showAcceptModal && selectedQuote && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2">Accept & Pay</h3>
-            <p className="text-sm text-gray-700">Enter payment details to accept this quote.</p>
+            <h3 className="text-lg font-semibold mb-2">{t('Accept & Pay')}</h3>
+            <p className="text-sm text-gray-700">{t('Enter payment details to accept this quote.')}</p>
             <div className="mt-4 text-sm text-gray-600 space-y-2">
-              <div className="flex justify-between"><span>Provider</span><span className="font-medium">{selectedQuote.providerName}</span></div>
-              <div className="flex justify-between"><span>Amount</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
+              <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{selectedQuote.providerName}</span></div>
+              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
             </div>
             <div className="mt-4">
               <StripePayment
@@ -621,7 +622,7 @@ const Quotes = () => {
               />
             </div>
           <div className="mt-4 flex justify-end">
-            <Button variant="outline" onClick={() => setShowAcceptModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowAcceptModal(false)}>{t('Cancel')}</Button>
           </div>
         </div>
       </div>
@@ -630,19 +631,19 @@ const Quotes = () => {
       {showPaymentSuccess && paymentSuccessData && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2 text-green-700">Payment Successful</h3>
-            <p className="text-sm text-gray-700">Your payment has been processed and the quote has been accepted.</p>
+            <h3 className="text-lg font-semibold mb-2 text-green-700">{t('Payment Successful')}</h3>
+            <p className="text-sm text-gray-700">{t('Your payment has been processed and the quote has been accepted.')}</p>
             <div className="mt-4 text-sm text-gray-700 space-y-2">
-              <div className="flex justify-between"><span>Provider</span><span className="font-medium">{paymentSuccessData.providerName}</span></div>
-              <div className="flex justify-between"><span>Request</span><span className="font-medium">{paymentSuccessData.requestTitle}</span></div>
-              <div className="flex justify-between"><span>Amount</span><span className="font-semibold">${(paymentSuccessData.amount ?? 0).toLocaleString?.() || paymentSuccessData.amount}</span></div>
+              <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{paymentSuccessData.providerName}</span></div>
+              <div className="flex justify-between"><span>{t('Request')}</span><span className="font-medium">{paymentSuccessData.requestTitle}</span></div>
+              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-semibold">${(paymentSuccessData.amount ?? 0).toLocaleString?.() || paymentSuccessData.amount}</span></div>
               {paymentSuccessData.invoiceId && (
-                <div className="flex justify-between"><span>Invoice ID</span><span className="font-mono">{paymentSuccessData.invoiceId}</span></div>
+                <div className="flex justify-between"><span>{t('Invoice ID')}</span><span className="font-mono">{paymentSuccessData.invoiceId}</span></div>
               )}
             </div>
             <div className="mt-6 flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => { setShowPaymentSuccess(false); }}>Close</Button>
-              <Button onClick={() => { setShowPaymentSuccess(false); /* Optional: navigate to projects */ }}>Go to Projects</Button>
+              <Button variant="outline" onClick={() => { setShowPaymentSuccess(false); }}>{t('Close')}</Button>
+              <Button onClick={() => { setShowPaymentSuccess(false); }}>{t('Go to Projects')}</Button>
             </div>
           </div>
         </div>

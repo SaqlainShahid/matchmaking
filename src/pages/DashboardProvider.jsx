@@ -6,6 +6,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Skeleton } from "../components/ui/skeleton";
+import { t } from '../lib/i18n';
 
 const DashboardProvider = () => {
   const navigate = useNavigate();
@@ -96,18 +97,18 @@ const DashboardProvider = () => {
             <span className="font-semibold text-gray-900">Matchmaking</span>
           </div>
           <nav className="px-4 space-y-1">
-            <a href="#" className="block px-3 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium">Dashboard</a>
-            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Requests</a>
-            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Quotes</a>
-            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Projects</a>
-            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Earnings</a>
+            <a href="#" className="block px-3 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium">{t('Dashboard')}</a>
+            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">{t('Requests')}</a>
+            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">{t('Quotes')}</a>
+            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">{t('Projects')}</a>
+            <a href="#" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">{t('Earnings')}</a>
           </nav>
           <div className="px-4 mt-6">
             <Button 
               onClick={() => handleCreateQuote()}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
-              New Quote
+              {t('New Quote')}
             </Button>
           </div>
         </aside>
@@ -120,7 +121,7 @@ const DashboardProvider = () => {
               <div className="relative flex-1 max-w-md">
                 <input
                   type="text"
-                  placeholder="Search requests..."
+                  placeholder={t('Search')}
                   className="w-full h-10 rounded-lg bg-gray-100 text-sm px-3 border border-transparent focus:bg-white focus:border-blue-500 outline-none"
                 />
               </div>
@@ -135,7 +136,7 @@ const DashboardProvider = () => {
                   onClick={handleLogout}
                   className="text-gray-700 hover:bg-gray-100"
                 >
-                  Logout
+                  {t('Logout')}
                 </Button>
               </div>
             </div>
@@ -143,13 +144,13 @@ const DashboardProvider = () => {
 
           {/* Dashboard Content */}
           <main className="p-6 max-w-7xl mx-auto w-full">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-6">Provider Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('Provider Dashboard')}</h1>
             
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <Card className="rounded-xl shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Total Requests</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">{t('Total Requests')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalRequests}</div>
@@ -158,7 +159,7 @@ const DashboardProvider = () => {
               
               <Card className="rounded-xl shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Pending Quotes</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">{t('Pending Quotes')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.pendingQuotes}</div>
@@ -167,7 +168,7 @@ const DashboardProvider = () => {
               
               <Card className="rounded-xl shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Active Projects</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">{t('Active Projects')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.activeProjects}</div>
@@ -176,7 +177,7 @@ const DashboardProvider = () => {
               
               <Card className="rounded-xl shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Total Earnings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">{t('Total Earnings')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">${stats.earnings}</div>
@@ -187,8 +188,8 @@ const DashboardProvider = () => {
             {/* Recent Requests */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Recent Service Requests</h2>
-                <Button variant="outline" size="sm">View All</Button>
+                <h2 className="text-lg font-semibold">{t('Recent Service Requests')}</h2>
+                <Button variant="outline" size="sm">{t('View All')}</Button>
               </div>
               
               {loading ? (
@@ -202,9 +203,9 @@ const DashboardProvider = () => {
                   {recentRequests.map((request) => (
                     <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                       <div>
-                        <h3 className="font-medium">{request.title || 'Service Request'}</h3>
+                        <h3 className="font-medium">{request.title || t('Service Request')}</h3>
                         <p className="text-sm text-gray-500">
-                          {request.status === 'pending' ? 'Waiting for quotes' : 'In progress'}
+                          {request.status === 'pending' ? t('Waiting for quotes') : t('In progress')}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -213,13 +214,13 @@ const DashboardProvider = () => {
                           size="sm" 
                           onClick={() => handleViewRequest(request.id)}
                         >
-                          View
+                          {t('View')}
                         </Button>
                         <Button 
                           size="sm"
                           onClick={() => handleCreateQuote(request.id)}
                         >
-                          Send Quote
+                          {t('Send Quote')}
                         </Button>
                       </div>
                     </div>
@@ -227,8 +228,8 @@ const DashboardProvider = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No recent service requests found</p>
-                  <p className="text-sm text-gray-400 mt-1">New requests will appear here</p>
+                  <p className="text-gray-500">{t('No recent service requests found')}</p>
+                  <p className="text-sm text-gray-400 mt-1">{t('New requests will appear here')}</p>
                 </div>
               )}
             </div>
@@ -236,25 +237,25 @@ const DashboardProvider = () => {
             {/* Quick Actions */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4">
-                <h3 className="font-medium mb-3">Quick Actions</h3>
+                <h3 className="font-medium mb-3">{t('Quick Actions')}</h3>
                 <div className="space-y-2">
                   <Button variant="outline" className="w-full justify-start">
-                    View All Requests
+                    {t('View All Requests')}
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
-                    Manage Quotes
+                    {t('Manage Quotes')}
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
-                    Track Projects
+                    {t('Track Projects')}
                   </Button>
                 </div>
               </Card>
               
               <Card className="p-4">
-                <h3 className="font-medium mb-3">Performance</h3>
+                <h3 className="font-medium mb-3">{t('Performance')}</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Response Rate</span>
+                    <span className="text-gray-500">{t('Response Rate')}</span>
                     <span className="font-medium">95%</span>
                   </div>
                   <div className="flex justify-between text-sm">

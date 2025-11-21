@@ -21,6 +21,7 @@ import {
   FiChevronLeft,
   FiUsers
 } from 'react-icons/fi';
+import { t } from '../lib/i18n';
 
 const OrderGiverLayout = () => {
   const navigate = useNavigate();
@@ -109,13 +110,13 @@ const OrderGiverLayout = () => {
     } ${isCollapsed ? 'px-3 justify-center' : ''}`;
 
   const menuItems = [
-    { path: '/dashboard/order-giver', icon: FiHome, label: 'Dashboard', end: true },
-    { path: '/providers', icon: FiUsers, label: 'Providers' },
-    { path: '/requests', icon: FiFileText, label: 'Service Requests' },
-    { path: '/quotes', icon: FiClipboard, label: 'Quotes & Proposals' },
-    { path: '/projects', icon: FiBriefcase, label: 'Projects' },
-    { path: '/messages', icon: FiMessageSquare, label: 'Messages' },
-    { path: '/feedback', icon: FiClipboard, label: 'Feedback' },
+    { path: '/dashboard/order-giver', icon: FiHome, label: t('Dashboard'), end: true },
+    { path: '/providers', icon: FiUsers, label: t('Providers') },
+    { path: '/requests', icon: FiFileText, label: t('Service Requests') },
+    { path: '/quotes', icon: FiClipboard, label: t('Quotes & Proposals') },
+    { path: '/projects', icon: FiBriefcase, label: t('Projects') },
+    { path: '/messages', icon: FiMessageSquare, label: t('Messages') },
+    { path: '/feedback', icon: FiClipboard, label: t('Feedback') },
   ];
 
   const sidebarWidth = isCollapsed ? 'w-64 lg:w-20' : 'w-64 lg:w-64';
@@ -137,7 +138,7 @@ const OrderGiverLayout = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 text-base">Matchmaking</h4>
-                  <p className="text-xs text-gray-500">Enterprise</p>
+                  <p className="text-xs text-gray-500">{t('Enterprise')}</p>
                 </div>
               </div>
             ) : (
@@ -197,10 +198,10 @@ const OrderGiverLayout = () => {
               className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center ${
                 isCollapsed ? 'px-2' : ''
               }`}
-              title={isCollapsed ? "New Request" : ""}
+              title={isCollapsed ? t('New Request') : ""}
             >
               <FiPlus size={18} className={isCollapsed ? '' : 'mr-2'} />
-              {!isCollapsed && "New Request"}
+              {!isCollapsed && t('New Request')}
             </Button>
           </div>
 
@@ -231,14 +232,14 @@ const OrderGiverLayout = () => {
                   className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <FiSettings size={14} className="mr-1" />
-                  Settings
+                  {t('Settings')}
                 </button>
                 <button 
                   onClick={handleLogout}
                   className="flex items-center text-gray-500 hover:text-red-600 transition-colors"
                 >
                   <FiLogOut size={14} className="mr-1" />
-                  Logout
+                  {t('Logout')}
                 </button>
               </div>
             )}
@@ -246,14 +247,14 @@ const OrderGiverLayout = () => {
               <div className="flex flex-col items-center space-y-3 text-xs">
                 <button 
                   className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
-                  title="Settings"
+                  title={t('Settings')}
                 >
                   <FiSettings size={16} />
                 </button>
                 <button 
                   onClick={handleLogout}
                   className="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
-                  title="Logout"
+                  title={t('Logout')}
                 >
                   <FiLogOut size={16} />
                 </button>
@@ -279,7 +280,7 @@ const OrderGiverLayout = () => {
             {/* Mobile menu button */}
             <button
               className="p-2 mr-2 rounded-lg lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-              aria-label="Open menu"
+              aria-label={t('Open menu')}
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <FiMenu size={18} />
@@ -291,7 +292,7 @@ const OrderGiverLayout = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search"
+                placeholder={t('Search')}
                 className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
@@ -322,7 +323,7 @@ const OrderGiverLayout = () => {
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('Notifications')}</p>
                     <button
                       onClick={async () => {
                         const uid = auth.currentUser?.uid;
@@ -332,12 +333,12 @@ const OrderGiverLayout = () => {
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
-                      Mark all as read
+                      {t('Mark all as read')}
                     </button>
                   </div>
                   <ul className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 && (
-                      <li className="px-4 py-6 text-sm text-gray-500 text-center">No notifications</li>
+                      <li className="px-4 py-6 text-sm text-gray-500 text-center">{t('No notifications')}</li>
                     )}
                     {notifications.map((n) => (
                       <li

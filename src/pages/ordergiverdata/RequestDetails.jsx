@@ -4,6 +4,7 @@ import { useOrderGiver } from '../../contexts/OrderGiverContext';
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { isImageUrl, thumbnailUrl } from "../../services/cloudinaryService";
 import { Button } from "../../components/ui/button";
+import { t } from '../../lib/i18n';
 
 const RequestDetails = () => {
   const { id } = useParams();
@@ -36,7 +37,7 @@ const RequestDetails = () => {
   };
 
   if (loading && !request) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">{t('Loading')}</div>;
   }
 
   if (!request) {
@@ -44,7 +45,7 @@ const RequestDetails = () => {
       <div className="p-6">
         <Card>
           <CardContent className="py-6">
-            <p className="text-gray-600">Request not found.</p>
+            <p className="text-gray-600">{t('Request not found.')}</p>
           </CardContent>
         </Card>
       </div>
@@ -54,31 +55,31 @@ const RequestDetails = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Request Details</h1>
-        <Button variant="outline" onClick={() => navigate('/requests')}>Back to Requests</Button>
+        <h1 className="text-2xl font-semibold text-gray-800">{t('Request Details')}</h1>
+        <Button variant="outline" onClick={() => navigate('/requests')}>{t('Back to Requests')}</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{request.title || 'Untitled Request'}</CardTitle>
+          <CardTitle>{request.title || t('Untitled Request')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-500">Status</p>
+              <p className="text-sm text-gray-500">{t('Status')}</p>
               <p className="text-gray-800">{request.status || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Description</p>
+              <p className="text-sm text-gray-500">{t('Description')}</p>
               <p className="text-gray-800">{request.description || 'No description'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Created</p>
+              <p className="text-sm text-gray-500">{t('Created')}</p>
               <p className="text-gray-800">{formatDate(request.createdAt)}</p>
             </div>
             {Array.isArray(request.attachments) && request.attachments.length > 0 && (
               <div>
-                <p className="text-sm text-gray-500 mb-2">Attachments</p>
+                <p className="text-sm text-gray-500 mb-2">{t('Attachments')}</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {request.attachments.map((url, idx) => (
                     <a
@@ -96,17 +97,17 @@ const RequestDetails = () => {
                         />
                       ) : (
                         <div className="h-16 w-20 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-xs">
-                          DOC
+                          {t('DOC')}
                         </div>
                       )}
-                      <span className="text-blue-600 truncate group-hover:underline">Attachment {idx + 1}</span>
+                      <span className="text-blue-600 truncate group-hover:underline">{t('Attachment')} {idx + 1}</span>
                     </a>
                   ))}
                 </div>
               </div>
             )}
             <div id="quotes" className="pt-2">
-              <Button onClick={() => navigate('/quotes')}>View Quotes</Button>
+              <Button onClick={() => navigate('/quotes')}>{t('View Quotes')}</Button>
             </div>
           </div>
         </CardContent>

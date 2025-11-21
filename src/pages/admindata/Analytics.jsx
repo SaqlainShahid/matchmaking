@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { FiRefreshCw } from 'react-icons/fi';
 import { getAdminAnalyticsSummary, getMonthlyRevenueSnapshot, getMonthlyUsersSnapshot, getMonthlyRequestsSnapshot } from '../../services/adminService';
+import { t } from '../../lib/i18n';
 
 const Analytics = () => {
   const [stats, setStats] = useState({ users: 0, providers: 0, requests: 0, quotes: 0, invoices: 0, revenue: 0 });
@@ -43,37 +44,37 @@ const Analytics = () => {
     <div className="space-y-4">
       <div className="bg-white rounded-xl p-4 border border-gray-200 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-gray-900">Analytics</h3>
-          <p className="text-sm text-gray-600">Key platform metrics and trends.</p>
+          <h3 className="font-semibold text-gray-900">{t('Analytics')}</h3>
+          <p className="text-sm text-gray-600">{t('Key platform metrics and trends.')}</p>
         </div>
         <button className="btn-primary" onClick={load} disabled={loading}>
-          <span className="inline-flex items-center gap-2"><FiRefreshCw /> Refresh</span>
+          <span className="inline-flex items-center gap-2"><FiRefreshCw /> {t('Refresh')}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Total Users</p>
+          <p className="text-sm text-gray-500">{t('Total Users')}</p>
           <p className="text-2xl font-semibold">{stats.users}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Providers</p>
+          <p className="text-sm text-gray-500">{t('Providers')}</p>
           <p className="text-2xl font-semibold">{stats.providers}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Requests</p>
+          <p className="text-sm text-gray-500">{t('Requests')}</p>
           <p className="text-2xl font-semibold">{stats.requests}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Quotes</p>
+          <p className="text-sm text-gray-500">{t('Quotes')}</p>
           <p className="text-2xl font-semibold">{stats.quotes}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Invoices</p>
+          <p className="text-sm text-gray-500">{t('Invoices')}</p>
           <p className="text-2xl font-semibold">{stats.invoices}</p>
         </div>
         <div className="bg-white border rounded-xl p-4">
-          <p className="text-sm text-gray-500">Revenue</p>
+          <p className="text-sm text-gray-500">{t('Revenue')}</p>
           <p className="text-2xl font-semibold">${Number(stats.revenue || 0).toFixed(2)}</p>
         </div>
       </div>
@@ -84,7 +85,7 @@ const Analytics = () => {
           {/* Revenue Trend */}
           <div className="bg-white border rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-semibold text-gray-900">Revenue Trend</h4>
+              <h4 className="text-lg font-semibold text-gray-900">{t('Revenue Trend')}</h4>
             </div>
             {revenueData.length > 0 ? (
               <div className="h-56">
@@ -105,13 +106,13 @@ const Analytics = () => {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">No paid invoices yet</div>
+              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">{t('No paid invoices yet')}</div>
             )}
           </div>
 
           {/* New Users Trend */}
           <div className="bg-white border rounded-xl p-4">
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">New Users Trend</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">{t('New Users Trend')}</h4>
             {usersTrend.length > 0 ? (
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
@@ -125,19 +126,19 @@ const Analytics = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v) => `${Number(v || 0)} users`} />
+                    <Tooltip formatter={(v) => `${Number(v || 0)} ${t('users')}`} />
                     <Bar dataKey="count" fill="url(#successGradientAnalytics)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">No recent user signups data</div>
+              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">{t('No recent user signups data')}</div>
             )}
           </div>
 
           {/* Requests Trend */}
           <div className="bg-white border rounded-xl p-4">
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">Requests Trend</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">{t('Requests Trend')}</h4>
             {requestsTrend.length > 0 ? (
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
@@ -151,13 +152,13 @@ const Analytics = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v) => `${Number(v || 0)} requests`} />
+                    <Tooltip formatter={(v) => `${Number(v || 0)} ${t('requests')}`} />
                     <Bar dataKey="count" fill="url(#warningGradientAnalytics)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">No recent requests data</div>
+              <div className="h-48 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">{t('No recent requests data')}</div>
             )}
           </div>
         </div>
