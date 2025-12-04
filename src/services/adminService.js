@@ -78,7 +78,7 @@ export const getProvidersForVerification = async (status = 'pending') => {
 export const setProviderVerification = async (userId, verificationStatus) => {
   const ref = doc(db, USERS, userId);
   await updateDoc(ref, { verificationStatus, verified: verificationStatus === 'approved', updatedAt: serverTimestamp() });
-  try { await sendNotification(userId, 'REQUEST_UPDATED', { requestTitle: 'Verification', requestId: '' }); } catch (_) {}
+  await sendNotification(userId, 'REQUEST_UPDATED', { requestTitle: 'Verification', requestId: '' }).catch(() => null);
   return true;
 };
 
@@ -86,6 +86,64 @@ export const setProviderVerification = async (userId, verificationStatus) => {
 export const getProvidersPendingVerification = async () => getProvidersForVerification('pending');
 export const verifyProvider = async (userId) => setProviderVerification(userId, 'approved');
 export const rejectProvider = async (userId) => setProviderVerification(userId, 'rejected');
+
+// Generic verification for any user role
+export const setUserVerification = async (userId, status = 'approved') => {
+  const ref = doc(db, USERS, userId);
+  await updateDoc(ref, { verificationStatus: status, verified: status === 'approved', updatedAt: serverTimestamp() });
+  return true;
+};
+
+// Hard delete user and related data across collections
+export const deleteUserAndData = async (userId) => {
+  await getDoc(doc(db, USERS, userId)).catch(() => null);
+
+  // Helper to delete docs by query
+  const deleteByQuery = async (col, clauses = []) => {
+    let qCol = collection(db, col);
+    for (const c of clauses) {
+      qCol = query(qCol, where(c.field, c.op || '==', c.value));
+    }
+    const snap = await getDocs(qCol).catch(() => null);
+    if (!snap) return;
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref).catch(() => null)));
+  };
+
+  // Collect requests by this user (order giver variants)
+  let requestIds = [];
+  const rq1 = await getDocs(query(collection(db, REQUESTS), where('createdBy', '==', userId))).catch(() => null);
+  const rq2 = await getDocs(query(collection(db, REQUESTS), where('orderGiverId', '==', userId))).catch(() => null);
+  requestIds = [...(rq1?.docs || []), ...(rq2?.docs || [])].map(d => d.id);
+
+  // Delete quotes tied to those requests
+  for (const rid of requestIds) {
+    await deleteByQuery(QUOTES, [{ field: 'requestId', value: rid }]);
+  }
+
+  // Delete requests
+  await Promise.all(requestIds.map(rid => deleteDoc(doc(db, REQUESTS, rid)).catch(() => null)));
+
+  // Delete direct quotes by clientId or providerId
+  await deleteByQuery(QUOTES, [{ field: 'clientId', value: userId }]);
+  await deleteByQuery(QUOTES, [{ field: 'providerId', value: userId }]);
+
+  // Delete provider services if any
+  await deleteByQuery('services', [{ field: 'providerId', value: userId }]);
+
+  // Delete invoices, projects possibly associated
+  await deleteByQuery(INVOICES, [{ field: 'clientId', value: userId }]);
+  await deleteByQuery(INVOICES, [{ field: 'providerId', value: userId }]);
+  await deleteByQuery(PROJECTS, [{ field: 'clientId', value: userId }]);
+  await deleteByQuery(PROJECTS, [{ field: 'providerId', value: userId }]);
+  await deleteByQuery(PROJECTS, [{ field: 'ownerId', value: userId }]);
+
+  // Delete disputes if any
+  await deleteByQuery(DISPUTES, [{ field: 'clientId', value: userId }]);
+  await deleteByQuery(DISPUTES, [{ field: 'providerId', value: userId }]);
+
+  await deleteDoc(doc(db, USERS, userId)).catch(() => null);
+  return true;
+};
 
 export const getProviderDocuments = async (providerId) => {
   try {
@@ -97,18 +155,12 @@ export const getProviderDocuments = async (providerId) => {
       return { name: itemRef.name, url };
     }));
     return files;
-  } catch (e) {
-    // Fallback: try flat folder without providerId
+  } catch {
     try {
       const folderRef = ref(storage, `provider_docs`);
-      const res = await listAll(folderRef);
-      const files = await Promise.all(res.items.map(async (itemRef) => {
-        const url = await getDownloadURL(itemRef);
-        return { name: itemRef.name, url };
-      }));
-      // No reliable association to provider; return empty to avoid misattribution
+      await listAll(folderRef);
       return [];
-    } catch (_) {
+    } catch {
       return [];
     }
   }
@@ -185,7 +237,8 @@ export const syncStripe = async () => {
 export const sendNotificationToUsers = async (userIds = [], type, data) => {
   const results = [];
   for (const uid of userIds) {
-    try { results.push(await sendNotification(uid, type, data)); } catch (_) {}
+    const res = await sendNotification(uid, type, data).catch(() => null);
+    if (res !== null) results.push(res);
   }
   return results;
 };

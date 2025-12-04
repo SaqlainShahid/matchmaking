@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
   sendEmailVerification
 } from "firebase/auth";
 import { auth, provider, db } from "../firebaseConfig";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import { t } from '../lib/i18n';
 
@@ -62,24 +62,29 @@ export default function Login() {
 
       const ref = doc(db, "users", user.uid);
       let role = "order_giver";
+      let verified = false;
       try {
         const snap = await getDoc(ref);
         if (!snap.exists()) {
-          await setDoc(ref, {
-            email: user.email,
-            role,
-            displayName: user.displayName || "",
-            provider: "password",
-            createdAt: serverTimestamp(),
-          });
+          setError(t('Your account is not available or was removed. Please contact support.'));
+          await auth.signOut();
+          return;
         } else {
-          role = snap.data().role || role;
+          const data = snap.data();
+          role = data.role || role;
+          verified = data.verificationStatus === 'approved' && data.verified === true;
         }
       } catch {
         // Network hiccup? Proceed with default role
       }
 
       // Redirect based on role, including admin
+      if ((role === "service_provider" || role === "provider" || role === "serviceProvider" || role === "order_giver") && !verified) {
+        navigate('/pending-approval');
+        await auth.signOut();
+        return;
+      }
+
       const target =
         role === "admin"
           ? "/admin/dashboard"
@@ -106,21 +111,22 @@ export default function Login() {
       // Check if user exists in Firestore
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
-
       if (!userDoc.exists()) {
-        // Create user document if it doesn't exist
-        await setDoc(userRef, {
-          email: user.email,
-          displayName: user.displayName || "",
-          role: "order_giver",
-          provider: "google.com",
-          createdAt: serverTimestamp(),
-          emailVerified: user.emailVerified
-        });
+        sessionStorage.setItem('signupPrompt', '1');
+        setError(t('Please complete registration to continue.'));
+        await auth.signOut();
+        navigate('/signup');
+        return;
       }
 
       // Redirect based on role
-      const role = userDoc.exists() ? userDoc.data().role : "order_giver";
+      const role = userDoc.data().role || "order_giver";
+      const verified = (userDoc.data().verificationStatus === 'approved' && userDoc.data().verified === true);
+      if ((role === "service_provider" || role === "provider" || role === "serviceProvider" || role === "order_giver") && !verified) {
+        navigate('/pending-approval');
+        await auth.signOut();
+        return;
+      }
       const target =
         role === "admin"
           ? "/admin/dashboard"
@@ -159,7 +165,7 @@ export default function Login() {
       {/* Floating Particles */}
       <div className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
-          <motion.div
+          <Motion.div
             key={i}
             className="absolute w-1 h-1 bg-blue-300 rounded-full opacity-40"
             initial={{
@@ -179,7 +185,7 @@ export default function Login() {
         ))}
       </div>
 
-      <motion.div 
+      <Motion.div 
         className="relative z-10 w-full max-w-sm mx-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -189,27 +195,27 @@ export default function Login() {
         <div className="backdrop-blur-lg bg-white/80 border border-white/60 rounded-2xl shadow-xl overflow-hidden">
           {/* Compact Header */}
           <div className="bg-gradient-to-r from-white to-blue-50/80 p-6 text-center border-b border-white/40">
-            <motion.h2 
+            <Motion.h2 
               className="text-2xl font-bold text-gray-900 mb-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
               {t('Welcome Back')}
-            </motion.h2>
-            <motion.p 
+            </Motion.h2>
+            <Motion.p 
               className="text-gray-600 text-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               {t('Sign in to continue')}
-            </motion.p>
+            </Motion.p>
           </div>
 
           <div className="p-6">
             {error && (
-              <motion.div 
+              <Motion.div 
                 className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -218,11 +224,11 @@ export default function Login() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-xs">{error}</span>
-              </motion.div>
+              </Motion.div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
@@ -243,9 +249,9 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-              </motion.div>
+              </Motion.div>
 
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
@@ -274,9 +280,9 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-              </motion.div>
+              </Motion.div>
 
-              <motion.button
+              <Motion.button
                 type="submit"
                 disabled={loading}
                 className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm relative overflow-hidden ${
@@ -303,10 +309,10 @@ export default function Login() {
                     t('Sign In')
                   )}
                 </span>
-              </motion.button>
+              </Motion.button>
             </form>
 
-            <motion.div 
+            <Motion.div 
               className="my-4 flex items-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -315,9 +321,9 @@ export default function Login() {
               <div className="flex-grow border-t border-gray-300"></div>
               <span className="flex-shrink mx-3 text-gray-500 text-xs">{t('OR')}</span>
               <div className="flex-grow border-t border-gray-300"></div>
-            </motion.div>
+            </Motion.div>
 
-            <motion.button
+            <Motion.button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
@@ -340,11 +346,11 @@ export default function Login() {
                 <path fill="#1976D2" d="M43.611,20.083h-1.318V20H24v8h11.303C34.494,31.885,29.661,36,24,36c-5.118,0-9.426-3.271-10.975-7.854 l-6.591,5.061C8.016,39.05,15.433,44,24,44c11.045,0,20-8.955,20-20C44,22.651,43.862,21.354,43.611,20.083z"/>
               </svg>
               <span className="font-medium">Google</span>
-            </motion.button>
+            </Motion.button>
           </div>
 
           <div className="bg-gray-50/80 border-t border-gray-200/60 px-6 py-4 text-center">
-            <motion.p 
+            <Motion.p 
               className="text-gray-600 text-xs"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -358,15 +364,15 @@ export default function Login() {
               >
                 {t('Sign up')}
               </button>
-            </motion.p>
+            </Motion.p>
           </div>
         </div>
-      </motion.div>
+      </Motion.div>
 
       {/* Enhanced Modal */}
       {showSignupPromptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white/95 backdrop-blur-lg border border-white/80 rounded-xl shadow-2xl w-full max-w-sm p-5 mx-4"
@@ -376,7 +382,7 @@ export default function Login() {
               {t('No account is linked to this Google login. Please register to continue.')}
             </p>
             <div className="flex gap-3">
-              <motion.button
+              <Motion.button
                 type="button"
                 onClick={() => { setShowSignupPromptModal(false); navigate('/signup'); }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-[1.02]"
@@ -384,8 +390,8 @@ export default function Login() {
                 whileTap={{ scale: 0.98 }}
               >
                 {t('Go to Signup')}
-              </motion.button>
-              <motion.button
+              </Motion.button>
+              <Motion.button
                 type="button"
                 onClick={() => setShowSignupPromptModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-all duration-200 transform hover:scale-[1.02]"
@@ -393,9 +399,9 @@ export default function Login() {
                 whileTap={{ scale: 0.98 }}
               >
                 {t('Close')}
-              </motion.button>
+              </Motion.button>
             </div>
-          </motion.div>
+          </Motion.div>
         </div>
       )}
     </div>

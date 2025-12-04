@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllUsers, updateUserRole, suspendUser, deleteUser } from '../../services/adminService';
+import { getAllUsers, updateUserRole, suspendUser, deleteUser, verifyProvider, setUserVerification, deleteUserAndData } from '../../services/adminService';
 import { t } from '../../lib/i18n';
 
 const Users = () => {
@@ -14,10 +14,12 @@ const Users = () => {
 
   const isProviderRole = (role) => ['service_provider', 'provider', 'serviceProvider'].includes(role);
   const normalizeRole = (role) => (role === 'provider' || role === 'serviceProvider') ? 'service_provider' : role;
+  const getUserId = (u) => u.uid || u.id;
 
   const filtered = users.filter(u => {
     if (filter === 'all') return true;
     if (filter === 'provider') return isProviderRole(u.role);
+    if (filter === 'pending_approvals') return (isProviderRole(u.role) || u.role === 'order_giver') && (u.verified !== true) && (u.verificationStatus !== 'approved');
     return u.role === filter;
   });
 
@@ -35,6 +37,7 @@ const Users = () => {
           <option value="all">{t('All')}</option>
           <option value="order_giver">{t('Order Givers')}</option>
           <option value="provider">{t('Providers')}</option>
+          <option value="pending_approvals">{t('Pending Approvals')}</option>
           <option value="admin">{t('Admins')}</option>
         </select>
       </div>
@@ -47,6 +50,7 @@ const Users = () => {
               <th className="text-left px-4 py-2">{t('Name')}</th>
               <th className="text-left px-4 py-2">{t('Email')}</th>
               <th className="text-left px-4 py-2">{t('Role')}</th>
+              <th className="text-left px-4 py-2">{t('Verification')}</th>
               <th className="text-left px-4 py-2">{t('Actions')}</th>
             </tr>
           </thead>
@@ -63,12 +67,39 @@ const Users = () => {
                   <select
                     className="border rounded-md px-2 py-1"
                     value={normalizeRole(u.role)}
-                    onChange={e => handleRoleChange(u.uid, e.target.value)}
+                    onChange={e => handleRoleChange(getUserId(u), e.target.value)}
                   >
                     <option value="order_giver">{t('Order Giver')}</option>
                     <option value="service_provider">{t('Provider')}</option>
                     <option value="admin">{t('Admin')}</option>
                   </select>
+                </td>
+                <td className="px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${u.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {u.verified ? t('Approved') : t('Pending')}
+                    </span>
+                    {!u.verified && (
+                      <>
+                        <button className="text-green-700 hover:underline" onClick={async () => {
+                          const id = getUserId(u);
+                          if (isProviderRole(u.role)) {
+                            await verifyProvider(id);
+                          } else {
+                            await setUserVerification(id, 'approved');
+                          }
+                          setUsers(prev => prev.map(x => (getUserId(x) === id) ? { ...x, verified: true, verificationStatus: 'approved' } : x));
+                        }}>{t('Approve')}</button>
+                        <button className="text-red-700 hover:underline" onClick={async () => {
+                          if (window.confirm(t('Reject and delete all data for this user?'))) {
+                            const id = getUserId(u);
+                            await deleteUserAndData(id);
+                            setUsers(prev => prev.filter(x => getUserId(x) !== id));
+                          }
+                        }}>{t('Reject')}</button>
+                      </>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-2 space-x-2">
                   {isProviderRole(u.role) && (

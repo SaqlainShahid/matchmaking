@@ -198,7 +198,7 @@ const translations = {
     'Submit Quote': 'Soumettre un devis',
     'Submit Professional Quote': 'Soumettre un devis professionnel',
     'Provide a clear offer including timing and scope.': 'Fournissez une offre claire comprenant délais et périmètre.',
-    'Amount (USD)': 'Montant (USD)',
+    'Amount (EUR)': 'Montant (EUR)',
     'Delivery Speed': 'Vitesse de livraison',
     '24 hours': '24 heures',
     '2 days': '2 jours',
@@ -404,8 +404,17 @@ const translations = {
     , 'Service Type *': 'Type de service *'
     , 'Select Service Type': 'Sélectionner un type de service'
     , 'Estimated Budget (Optional)': 'Budget estimé (optionnel)'
-    , '$': '$'
-    , '0.00': '0,00'
+    , '$': '€'
+    , '0,00': '0,00'
+    , 'Registration Type': "Type d’inscription"
+    , 'Service Types': 'Types de services'
+    , 'Real Estate Agency': 'Agence immobilière'
+    , 'Your account is pending admin approval.': 'Votre compte est en attente de validation par l’admin.'
+    , 'Awaiting Admin Approval': 'En attente de validation par l’admin'
+    , 'Your account is pending admin approval. You will be able to sign in once it is approved.': 'Votre compte est en attente de validation par l’admin. Vous pourrez vous connecter une fois qu’il aura été approuvé.'
+    , 'If you just registered, please also verify your email to speed up the review.': 'Si vous venez de vous inscrire, veuillez également vérifier votre e‑mail pour accélérer la validation.'
+    
+    , 'All pricing should be in EUR. You can set detailed rates later in Provider Settings.': 'Tous les tarifs doivent être en EUR. Vous pourrez définir des tarifs détaillés plus tard dans les Paramètres du prestataire.'
     , 'Service Description *': 'Description du service *'
     , 'Please provide detailed information about the service you need, including specific requirements, scope of work, and any relevant details...': 'Veuillez fournir des informations détaillées sur le service requis, y compris les exigences spécifiques, le périmètre du travail et tout détail pertinent…'
     , 'Minimum 30 characters. Provide enough detail for service providers to understand your needs.': 'Minimum 30 caractères. Fournissez suffisamment de détails pour que les prestataires comprennent vos besoins.'
@@ -431,7 +440,7 @@ const translations = {
     , 'Contact Person *': 'Personne de contact *'
     , 'Full name of primary contact': 'Nom complet du contact principal'
     , 'Contact Phone *': 'Téléphone de contact *'
-    , '+1 (555) 123-4567': '+33 1 23 45 67 89'
+    , '+33 6 12 34 56 78': '+33 6 12 34 56 78'
     , 'Preferred Service Date (Optional)': 'Date de service préférée (optionnel)'
     , 'Supporting Documentation': 'Documents justificatifs'
     , 'Upload relevant documents, photos, or specifications to help service providers understand your requirements better.': 'Téléchargez des documents, photos ou spécifications pertinents pour aider les prestataires à comprendre vos exigences.'

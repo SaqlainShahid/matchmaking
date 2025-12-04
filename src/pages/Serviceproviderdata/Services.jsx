@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { auth } from '../../firebaseConfig';
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -24,24 +24,24 @@ const Services = () => {
     category: '',
     description: '',
     price: '',
-    currency: 'USD',
+    currency: 'EUR',
     status: 'draft',
     images: [],
     tags: ''
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!providerId) return;
     setLoading(true);
     const list = await getProviderServices(providerId);
     setServices(list);
     setLoading(false);
-  };
+  }, [providerId]);
 
-  useEffect(() => { load(); }, [providerId]);
+  useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ title: '', category: '', description: '', price: '', currency: 'USD', status: 'draft', images: [], tags: '' });
+    setForm({ title: '', category: '', description: '', price: '', currency: 'EUR', status: 'draft', images: [], tags: '' });
     setFiles([]);
   };
 
@@ -53,7 +53,7 @@ const Services = () => {
       category: svc.category || '',
       description: svc.description || '',
       price: String(svc.price || ''),
-      currency: svc.currency || 'USD',
+      currency: svc.currency || 'EUR',
       status: svc.status || 'draft',
       images: Array.isArray(svc.images) ? svc.images : [],
       tags: (Array.isArray(svc.tags) ? svc.tags.join(', ') : '')
@@ -190,9 +190,7 @@ const Services = () => {
             <div>
               <label className="text-sm font-medium text-gray-700">{t('Currency')}</label>
               <select className="border rounded-md p-2 w-full" value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}>
-                <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
               </select>
             </div>
             <div className="md:col-span-2">

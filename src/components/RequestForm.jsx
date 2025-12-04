@@ -73,7 +73,6 @@ export default function EnterpriseRequestForm() {
     serviceType: '',
     priority: 'urgent_sur_devis',
     location: '',
-    department: '',
     costCenter: '',
     scheduledDate: '',
     budget: '',
@@ -105,7 +104,7 @@ export default function EnterpriseRequestForm() {
       } else if (formData.description.trim().length < 30) {
         errors.description = t('Description should be at least 30 characters for proper assessment');
       }
-      if (!formData.department) errors.department = t('Department is required');
+      
     }
 
     if (step === 2) {
@@ -121,10 +120,16 @@ export default function EnterpriseRequestForm() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'contactPhone') {
+      const digits = (value || '').replace(/[^0-9]/g, '');
+      const normalized = `+33 ${digits}`.replace(/\s+/g, ' ').trim();
+      setFormData(prev => ({ ...prev, contactPhone: normalized }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -223,7 +228,7 @@ export default function EnterpriseRequestForm() {
         priority: formData.priority,
         status: 'pending', // Using 'pending' instead of 'pending_review' to match dashboard
         createdBy: currentUser.uid,
-        department: formData.department,
+        
         costCenter: formData.costCenter,
         location: {
           address: formData.location,
@@ -231,7 +236,7 @@ export default function EnterpriseRequestForm() {
         budget: formData.budget ? parseFloat(formData.budget) : null,
         contactInfo: {
           person: formData.contactPerson,
-          phone: formData.contactPhone,
+          phone: (formData.contactPhone?.startsWith('+33') ? formData.contactPhone : (`+33 ${formData.contactPhone || ''}`)).trim(),
           email: currentUser.email,
         },
         attachments: fileUrls,
@@ -366,32 +371,7 @@ export default function EnterpriseRequestForm() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="department" className="text-sm font-semibold">{t('Department *')}</Label>
-                  <select
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={(e) => handleSelectChange('department', e.target.value)}
-                    className={`border rounded-lg p-3 w-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-11 ${
-                      formErrors.department ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="" disabled>{t('Select Department')}</option>
-                    <option value="operations">{t('Operations')}</option>
-                    <option value="it">{t('Information Technology')}</option>
-                    <option value="hr">{t('Human Resources')}</option>
-                    <option value="finance">{t('Finance')}</option>
-                    <option value="marketing">{t('Marketing')}</option>
-                    <option value="facilities">{t('Facilities Management')}</option>
-                  </select>
-                  {formErrors.department && (
-                    <p className="text-sm text-red-600 flex items-center mt-1">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      {formErrors.department}
-                    </p>
-                  )}
-                </div>
+                
               </div>
 
               <div className="space-y-4">
@@ -598,7 +578,13 @@ export default function EnterpriseRequestForm() {
                       type="tel"
                       value={formData.contactPhone}
                       onChange={handleInputChange}
-                      placeholder={t('+1 (555) 123-4567')}
+                      onFocus={() => {
+                        if (!formData.contactPhone) {
+                          setFormData(prev => ({ ...prev, contactPhone: '+33 ' }));
+                        }
+                      }}
+                      pattern="^\+33\s?[0-9]{6,}$"
+                      placeholder={t('+33 6 12 34 56 78')}
                       className={`h-11 ${formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
                     />
                     {formErrors.contactPhone && (
@@ -770,7 +756,7 @@ export default function EnterpriseRequestForm() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <div>
           <Card className="border-0 shadow-lg">
             <CardHeader className="pb-4 border-b border-gray-200 bg-white">
               <div className="text-center">
@@ -787,17 +773,9 @@ export default function EnterpriseRequestForm() {
               {renderStepIndicator()}
 
               <form onSubmit={handleSubmit} className="space-y-8">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`step-${currentStep}`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {renderStepContent()}
-                  </motion.div>
-                </AnimatePresence>
+                <div>
+                  {renderStepContent()}
+                </div>
                 
                 <div className="flex justify-between items-center pt-8 border-t border-gray-200">
                   <Button 
@@ -936,7 +914,7 @@ export default function EnterpriseRequestForm() {
               )}
             </div>
           </Modal>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -173,8 +173,8 @@ const Quotes = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700">{t('Amount (USD)')}</label>
-                      <input className="border rounded-md p-2 w-full" type="number" placeholder={t('0.00')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                      <label className="text-sm font-medium text-gray-700">{t('Amount (EUR)')}</label>
+                      <input className="border rounded-md p-2 w-full" type="number" placeholder={t('0,00')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">{t('Delivery Speed')}</label>
@@ -230,7 +230,7 @@ const Quotes = () => {
                 <div key={q.id} className="p-4 flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900 truncate">{t('Request')}: {q.requestId}</p>
-                    <p className="text-sm text-gray-500">{t('Amount')}: ${q.amount} • {t('Status')}: {q.status}</p>
+                    <p className="text-sm text-gray-500">{t('Amount')}: €{q.amount} • {t('Status')}: {q.status}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => navigate(`/provider/messages?otherUserId=${q.clientId}`)}>{t('Message')}</Button>
@@ -266,7 +266,7 @@ const Quotes = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('Amount')}</span>
-                <span className="font-semibold text-gray-900">${quoteSuccessInfo.amount}</span>
+                <span className="font-semibold text-gray-900">€{quoteSuccessInfo.amount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('Package')}</span>

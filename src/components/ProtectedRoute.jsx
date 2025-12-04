@@ -8,6 +8,8 @@ const ProtectedRoute = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [verification, setVerification] = useState({ approved: false, rejected: false });
+  const [role, setRole] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -18,12 +20,17 @@ const ProtectedRoute = ({ children }) => {
         const userDoc = await getDoc(userRef);
         
         if (userDoc.exists()) {
-          // Update last login time
-          await setDoc(userRef, {
-            lastLogin: new Date().toISOString()
-          }, { merge: true });
+          await setDoc(userRef, { lastLogin: new Date().toISOString() }, { merge: true });
+          const data = userDoc.data() || {};
+          const r = data.role || null;
+          const approved = data.verificationStatus === 'approved' && data.verified === true;
+          const rejected = data.verificationStatus === 'rejected';
+          setRole(r);
+          setVerification({ approved, rejected });
           setHasProfile(true);
         } else {
+          setRole(null);
+          setVerification({ approved: false, rejected: false });
           setHasProfile(false);
         }
       }
@@ -56,6 +63,15 @@ const ProtectedRoute = ({ children }) => {
   // If user doesn't have a profile, redirect to signup
   if (!hasProfile) {
     return <Navigate to="/signup" state={{ from: location }} replace />;
+  }
+
+  // Enforce admin approval gate (admins are exempt)
+  const normalizedRole = role === 'serviceProvider' ? 'service_provider' : role;
+  if (normalizedRole !== 'admin' && verification.rejected) {
+    return <Navigate to="/login" state={{ from: location, message: 'Your account was rejected by admin.' }} replace />;
+  }
+  if (normalizedRole !== 'admin' && !verification.approved) {
+    return <Navigate to="/pending-approval" state={{ from: location }} replace />;
   }
 
   // If we got here, the user is authenticated and has a profile

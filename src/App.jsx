@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { auth } from './firebaseConfig'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import RoleGuard from './components/RoleGuard.jsx'
 import RoleLanding from './components/RoleLanding.jsx'
@@ -15,6 +15,7 @@ import AdminLayout from './layouts/AdminLayout'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
+import PendingApproval from './pages/PendingApproval'
 import DashboardOrderGiver from './pages/ordergiverdata/DashboardOrderGiver'
 import DashboardProvider from './pages/Serviceproviderdata/DashboardProvider'
 import ProviderRequests from './pages/Serviceproviderdata/Requests'
@@ -88,6 +89,7 @@ function App() {
           path="/signup"
           element={user && user.emailVerified ? <Navigate to="/dashboard" /> : <Signup />}
         />
+        <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Order Giver Area with static sidebar */}

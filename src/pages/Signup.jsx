@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -22,6 +22,8 @@ export default function Signup() {
   const [company, setCompany] = useState("");
   const [city, setCity] = useState("");
   const [role, setRole] = useState("order_giver");
+  const [providerType, setProviderType] = useState('service_provider');
+  const [providerServices, setProviderServices] = useState([]);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
@@ -48,24 +50,34 @@ export default function Signup() {
 
       // Kick off verification and profile save concurrently (no blocking)
       void sendEmailVerification(user).catch(console.error);
-          void setDoc(
-            doc(db, "users", user.uid),
-            {
+          {
+            const payload = {
               email,
               role,
               displayName: fullName,
               phone,
               company: company || "",
               city: city || "",
+              verificationStatus: 'pending',
+              verified: false,
               provider: "password",
               createdAt: serverTimestamp(),
-            },
-            { merge: true }
-          ).catch(console.error);
+            };
+            if (role === 'service_provider') {
+              payload.providerType = providerType;
+              payload.serviceTypes = providerServices;
+            }
+            void setDoc(
+              doc(db, "users", user.uid),
+              payload,
+              { merge: true }
+            ).catch(console.error);
+          }
 
       // Show verify modal instead of alert
       setShowVerifyModal(true);
       setResendMessage(t("We sent a verification email. Please check your inbox."));
+      navigate('/pending-approval');
     } catch (error) {
       setError(error.message);
     } finally {
@@ -94,20 +106,26 @@ export default function Signup() {
         return;
       }
 
-      await setDoc(
-        userRef,
-        {
+      {
+        const payload = {
           email: user.email,
           role,
           displayName: fullName,
           phone,
           company: company || "",
           city: city || "",
+          verificationStatus: 'pending',
+          verified: false,
           provider: "google",
           createdAt: serverTimestamp(),
+        };
+        if (role === 'service_provider') {
+          payload.providerType = providerType;
+          payload.serviceTypes = providerServices;
         }
-      );
-      navigate(role === "service_provider" ? "/provider/dashboard" : "/dashboard/order-giver");
+        await setDoc(userRef, payload);
+      }
+      navigate('/pending-approval');
     } catch (error) {
       setError(error.message);
     } finally {
@@ -137,7 +155,7 @@ export default function Signup() {
       {/* Floating Particles */}
       <div className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
-          <motion.div
+          <Motion.div
             key={i}
             className="absolute w-1 h-1 bg-blue-300 rounded-full opacity-40"
             initial={{
@@ -157,7 +175,7 @@ export default function Signup() {
         ))}
       </div>
 
-      <motion.div 
+      <Motion.div 
         className="relative z-10 w-full max-w-4xl mx-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,27 +185,27 @@ export default function Signup() {
         <div className="backdrop-blur-lg bg-white/80 border border-white/60 rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-white to-blue-50/80 p-8 text-center border-b border-white/40">
-            <motion.h2 
+            <Motion.h2 
               className="text-3xl font-bold text-gray-900 mb-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
               {t('Create Your Account')}
-            </motion.h2>
-            <motion.p 
+            </Motion.h2>
+            <Motion.p 
               className="text-gray-600"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               {t('Join us today and get started')}
-            </motion.p>
+            </Motion.p>
           </div>
 
           <div className="p-8">
             {error && (
-              <motion.div 
+              <Motion.div 
                 className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -196,7 +214,7 @@ export default function Signup() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-sm">{error}</span>
-              </motion.div>
+              </Motion.div>
             )}
 
             <div className="flex flex-col lg:flex-row gap-8">
@@ -204,7 +222,7 @@ export default function Signup() {
               <div className="lg:w-1/2">
                 <form onSubmit={handleSignup} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <motion.div
+                    <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 }}
@@ -219,8 +237,8 @@ export default function Signup() {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                       />
-                    </motion.div>
-                    <motion.div
+                    </Motion.div>
+                    <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 }}
@@ -235,11 +253,11 @@ export default function Signup() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                       />
-                    </motion.div>
+                    </Motion.div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <motion.div
+                    <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.6 }}
@@ -253,8 +271,8 @@ export default function Signup() {
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
                       />
-                    </motion.div>
-                    <motion.div
+                    </Motion.div>
+                    <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.7 }}
@@ -268,11 +286,11 @@ export default function Signup() {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                       />
-                    </motion.div>
+                    </Motion.div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <motion.div
+          <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.8 }}
@@ -288,8 +306,8 @@ export default function Signup() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
-                    </motion.div>
-                    <motion.div
+                    </Motion.div>
+                    <Motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.9 }}
@@ -305,10 +323,10 @@ export default function Signup() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
-                    </motion.div>
+                    </Motion.div>
                   </div>
 
-                  <motion.div
+                  <Motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.0 }}
@@ -323,9 +341,56 @@ export default function Signup() {
                       <option value="order_giver">{t('Order Giver')}</option>
                       <option value="service_provider">{t('Service Provider')}</option>
                     </select>
-                  </motion.div>
+                  </Motion.div>
 
-                  <motion.button
+                  {role === 'service_provider' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('Registration Type')}</label>
+                        <select
+                          className="w-full px-4 py-3 text-sm bg-white/50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                          value={providerType}
+                          onChange={(e) => setProviderType(e.target.value)}
+                        >
+                          <option value="service_provider">{t('Service Provider')}</option>
+                          <option value="real_estate_agency">{t('Real Estate Agency')}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('Service Types')}</label>
+                        <div className="grid grid-cols-1 gap-2 border border-gray-200 rounded-lg p-3 bg-white/60">
+                          {[ 
+                            { value: 'plomberie_chauffage', label: t('Plomberie & Chauffage') },
+                            { value: 'electricite_domotique', label: t('Électricité & Domotique') },
+                            { value: 'menuiserie_amenagement', label: t('Menuiserie & Aménagement') },
+                            { value: 'maconnerie_gros_oeuvre', label: t('Maçonnerie & Gros Œuvre') },
+                            { value: 'peinture_finitions', label: t('Peinture & Finitions') },
+                            { value: 'sols_revetements', label: t('Sols & Revêtements') },
+                            { value: 'chauffage_ventilation_climatisation', label: t('Chauffage, Ventilation & Climatisation') },
+                            { value: 'serrurerie_securite', label: t('Serrurerie & Sécurité') },
+                            { value: 'toiture_couverture', label: t('Toiture & Couverture') },
+                            { value: 'jardin_exterieur', label: t('Jardin & Extérieur') },
+                            { value: 'renovation_energetique_isolation', label: t('Rénovation Énergétique & Isolation') },
+                            { value: 'services_complementaires_coordination', label: t('Services Complémentaires & Coordination') }
+                          ].map(opt => (
+                            <label key={opt.value} className="flex items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={providerServices.includes(opt.value)}
+                                onChange={(e) => {
+                                  setProviderServices(prev => e.target.checked ? [...prev, opt.value] : prev.filter(v => v !== opt.value));
+                                }}
+                              />
+                              <span>{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{t('All pricing should be in EUR. You can set detailed rates later in Provider Settings.')}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <Motion.button
                     type="submit"
                     disabled={loading}
                     className={`w-full py-3.5 px-4 rounded-lg font-medium text-white text-sm relative overflow-hidden ${
@@ -352,32 +417,32 @@ export default function Signup() {
                         t('Create Account')
                       )}
                     </span>
-                  </motion.button>
+                  </Motion.button>
                 </form>
               </div>
 
               {/* Right Side - Google Signup */}
               <div className="lg:w-1/2 flex flex-col justify-center">
                 <div className="text-center mb-8">
-                  <motion.h3 
+                  <Motion.h3 
                     className="text-xl font-semibold text-gray-900 mb-2"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                   >
                     {t('Quick Sign Up')}
-                  </motion.h3>
-                  <motion.p 
+                  </Motion.h3>
+                  <Motion.p 
                     className="text-gray-600 text-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
                     {t('Use your Google account to get started')}
-                  </motion.p>
+                  </Motion.p>
                 </div>
 
-                <motion.button
+                <Motion.button
                   onClick={handleGoogleSignup}
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
@@ -399,10 +464,10 @@ export default function Signup() {
                     <path fill="#1976D2" d="M43.611,20.083h-1.318V20H24v8h11.303C34.494,31.885,29.661,36,24,36c-5.118,0-9.426-3.271-10.975-7.854 l-6.591,5.061C8.016,39.05,15.433,44,24,44c11.045,0,20-8.955,20-20C44,22.651,43.862,21.354,43.611,20.083z"/>
                   </svg>
                   <span className="font-medium">{t('Sign up with Google')}</span>
-                </motion.button>
+                </Motion.button>
 
                 {/* Divider */}
-                <motion.div 
+                <Motion.div 
                   className="my-6 flex items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -411,10 +476,10 @@ export default function Signup() {
                   <div className="flex-grow border-t border-gray-300"></div>
                   <span className="flex-shrink mx-4 text-gray-500 text-sm">{t('OR')}</span>
                   <div className="flex-grow border-t border-gray-300"></div>
-                </motion.div>
+                </Motion.div>
 
                 {/* Already have account */}
-                <motion.div 
+                <Motion.div 
                   className="text-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -430,17 +495,17 @@ export default function Signup() {
                       {t('Sign in here')}
                     </button>
                   </p>
-                </motion.div>
+                </Motion.div>
               </div>
             </div>
           </div>
         </div>
-      </motion.div>
+      </Motion.div>
 
       {/* Enhanced Verify Modal */}
       {showVerifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white/95 backdrop-blur-lg border border-white/80 rounded-xl shadow-2xl w-full max-w-md p-6 mx-4"
@@ -461,7 +526,7 @@ export default function Signup() {
               <p className="text-sm text-green-600 text-center mb-4">{resendMessage}</p>
             )}
             <div className="flex flex-col gap-3">
-              <motion.button
+              <Motion.button
                 type="button"
                 onClick={() => navigate('/login')}
                 className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-[1.02]"
@@ -469,8 +534,8 @@ export default function Signup() {
                 whileTap={{ scale: 0.98 }}
               >
                 {t('Go to Login')}
-              </motion.button>
-              <motion.button
+              </Motion.button>
+              <Motion.button
                 type="button"
                 onClick={async () => {
                   try {
@@ -495,9 +560,9 @@ export default function Signup() {
                 whileTap={{ scale: resendLoading ? 1 : 0.98 }}
               >
                 {resendLoading ? t('Resending...') : t('Resend Email')}
-              </motion.button>
+              </Motion.button>
             </div>
-          </motion.div>
+          </Motion.div>
         </div>
       )}
     </div>
