@@ -7,7 +7,7 @@ export function useToast() {
     const prefix = variant === 'destructive' ? '[Error] ' : '';
     const message = [prefix + header, body].filter(Boolean).join('\n');
     // Non-blocking: log to console and rely on any UI popups/toast components present.
-    console.log('[toast]', message);
+    // ...existing code...
   }, []);
 
   return { toast };

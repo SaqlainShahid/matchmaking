@@ -44,7 +44,7 @@ const Quotes = () => {
           setRequestSummary(null);
         }
       } catch (e) {
-        console.error('Error loading request summary:', e);
+        // ...existing code...
       }
     };
     loadSummary();

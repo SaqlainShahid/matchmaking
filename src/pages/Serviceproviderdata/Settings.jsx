@@ -41,7 +41,7 @@ const Settings = () => {
     try {
       await saveProfile(form);
     } catch (e) {
-      console.error(e);
+      // ...existing code...
     } finally {
       setSaving(false);
     }

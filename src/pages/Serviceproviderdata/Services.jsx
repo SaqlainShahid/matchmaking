@@ -72,6 +72,7 @@ const Services = () => {
       providerId,
       ownerId: providerId,
       price: Number(form.price || 0),
+      currency: 'EUR',
       images: [...form.images, ...uploaded.map(u => u.url)],
       tags: String(form.tags || '').split(',').map(t => t.trim()).filter(Boolean)
     };
@@ -94,6 +95,7 @@ const Services = () => {
       providerId,
       ownerId: providerId,
       price: Number(form.price || 0),
+      currency: 'EUR',
       images: [...(form.images || []), ...uploaded.map(u => u.url)],
       tags: String(form.tags || '').split(',').map(t => t.trim()).filter(Boolean)
     };
@@ -144,7 +146,7 @@ const Services = () => {
                 <div key={svc.id} className="flex flex-col md:flex-row md:items-center justify-between gap-3 py-3">
                   <div>
                     <div className="font-medium text-gray-900">{svc.title}</div>
-                    <div className="text-sm text-gray-600">{svc.category} • {svc.currency}{svc.price}</div>
+                    <div className="text-sm text-gray-600">{svc.category} • {Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(svc.price)}</div>
                     <div className="text-xs text-gray-500">{svc.status === 'published' ? t('Published') : t('Draft')}</div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -238,18 +240,16 @@ const Services = () => {
               <label className="text-sm font-medium text-gray-700">{t('Category')}</label>
               <input className="border rounded-md p-2 w-full" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">{t('Price')}</label>
-              <input className="border rounded-md p-2 w-full" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">{t('Currency')}</label>
-              <select className="border rounded-md p-2 w-full" value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="text-sm font-medium text-gray-700">{t('Prix')}</label>
+                <input className="border rounded-md p-2 w-full" type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">{t('Devise')}</label>
+                <input className="border rounded-md p-2 w-full bg-gray-100" value="EUR" disabled />
+              </div>
+            </>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-gray-700">{t('Description')}</label>
               <textarea className="border rounded-md p-2 w-full" rows="3" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
@@ -280,16 +280,16 @@ const Services = () => {
         title={t('Service Saved')}
         icon={<CheckCircle2 className="text-emerald-600" />}
         footer={(
-          <>
-            <Button variant="outline" onClick={() => setSuccessOpen(false)}>{t('Close')}</Button>
-          </>
-        )}
-      >
-        <div className="space-y-2 text-sm">
-          <p className="text-gray-700">{t('Your service has been saved.')}</p>
-          {successInfo && (
-            <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-              <div className="flex justify-between">
+            <>
+              <div>
+                <label className="text-sm font-medium text-gray-700">{t('Prix')}</label>
+                <input className="border rounded-md p-2 w-full" type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">{t('Devise')}</label> 
+                <input className="border rounded-md p-2 w-full bg-gray-100" value="EUR" disabled />
+              </div>
+              <div>
                 <span className="text-gray-600">{t('Title')}</span>
                 <span className="font-medium text-gray-900">{successInfo.title}</span>
               </div>
@@ -297,10 +297,9 @@ const Services = () => {
                 <span className="text-gray-600">{t('Status')}</span>
                 <span className="text-gray-900">{successInfo.status}</span>
               </div>
-            </div>
+            </>
           )}
-        </div>
-      </Modal>
+      />
     </div>
   );
 };

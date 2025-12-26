@@ -1,4 +1,4 @@
-export const uploadToCloudinary = async (file, options = {}) => {
+export const uploadToCloudinary = (file, options = {}) => {
   const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME;
   const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PRESET;
 
@@ -16,18 +16,67 @@ export const uploadToCloudinary = async (file, options = {}) => {
     formData.append('folder', options.folder);
   }
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    body: formData,
-  });
+  // If caller provided an onProgress callback, use XHR to get upload progress events
+  if (typeof options.onProgress === 'function') {
+    return new Promise((resolve, reject) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', endpoint);
 
-  const data = await res.json();
-  if (!res.ok) {
-    const message = data?.error?.message || 'Cloudinary upload failed';
-    throw new Error(message);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            try {
+              options.onProgress(percent);
+            } catch (err) {
+              // swallow progress handler errors
+              console.warn('onProgress handler error:', err);
+            }
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText || '{}');
+              resolve(data.secure_url || data.url);
+            } catch (err) {
+              reject(err);
+            }
+          } else {
+            try {
+              const data = JSON.parse(xhr.responseText || '{}');
+              const message = data?.error?.message || 'Cloudinary upload failed';
+              reject(new Error(message));
+            } catch (err) {
+              reject(new Error('Cloudinary upload failed'));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error during Cloudinary upload'));
+        xhr.send(formData);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
-  return data.secure_url || data.url;
+  // Fallback: use fetch when progress tracking is not required
+  return (async () => {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const message = data?.error?.message || 'Cloudinary upload failed';
+      throw new Error(message);
+    }
+
+    return data.secure_url || data.url;
+  })();
 };
 
 export const isImageUrl = (url) => {

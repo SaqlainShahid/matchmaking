@@ -76,7 +76,7 @@ const ProviderServicesAdmin = () => {
                     <tr key={s.id} className="border-t">
                       <td className="px-4 py-2 font-medium text-gray-900">{s.title}</td>
                       <td className="px-4 py-2 text-gray-700">{s.category || '—'}</td>
-                      <td className="px-4 py-2 text-gray-700">{s.currency || 'USD'}{s.price || 0}</td>
+                      <td className="px-4 py-2 text-gray-700">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(s.price || 0)}</td>
                       <td className="px-4 py-2">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${s.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>
                           {s.status || 'draft'}

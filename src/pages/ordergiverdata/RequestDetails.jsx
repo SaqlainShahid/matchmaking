@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import { isImageUrl, thumbnailUrl } from "../../services/cloudinaryService";
 import { Button } from "../../components/ui/button";
 import { t } from '../../lib/i18n';
+import { normalizeRequest } from '../../lib/requestUtils';
 
 const RequestDetails = () => {
   const { id } = useParams();
@@ -17,7 +18,7 @@ const RequestDetails = () => {
     const fetchRequest = async () => {
       try {
         const data = await getRequestById(id);
-        if (mounted) setRequest(data);
+        if (mounted) setRequest(normalizeRequest(data));
       } catch (error) {
         console.error('Failed to load request:', error);
       }
@@ -52,6 +53,23 @@ const RequestDetails = () => {
     );
   }
 
+  const attachments = request.files || request.attachments || request.fichiers || [];
+  const currentStatus = request.status || request.statut || 'N/A';
+
+  function statusLabel(value) {
+    switch (value) {
+      case 'en_attente': return 'En attente';
+      case 'approuvée': return 'Approuvée';
+      case 'rejetée': return 'Rejetée';
+      case 'pending': return 'Pending';
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
+      case 'in_progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      default: return value || '—';
+    }
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
@@ -67,7 +85,7 @@ const RequestDetails = () => {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-500">{t('Status')}</p>
-              <p className="text-gray-800">{request.status || 'N/A'}</p>
+              <p className="text-gray-800">{statusLabel(currentStatus)}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">{t('Description')}</p>
@@ -77,11 +95,11 @@ const RequestDetails = () => {
               <p className="text-sm text-gray-500">{t('Created')}</p>
               <p className="text-gray-800">{formatDate(request.createdAt)}</p>
             </div>
-            {Array.isArray(request.attachments) && request.attachments.length > 0 && (
+            {attachments.length > 0 && (
               <div>
                 <p className="text-sm text-gray-500 mb-2">{t('Attachments')}</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {request.attachments.map((url, idx) => (
+                  {attachments.map((url, idx) => (
                     <a
                       key={idx}
                       href={url}

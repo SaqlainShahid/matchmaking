@@ -312,7 +312,7 @@ const Messages = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {otherUser.name}
                       {typingOther && (
-                        <span className="text-xs px-2 py-1 border rounded">Typing...</span>
+                                      <span className="text-xs px-2 py-1 border rounded">{t('En train d\'écrire...')}</span>
                       )}
                     </CardTitle>
                     <div className="text-sm text-gray-600 flex items-center gap-2">
@@ -334,7 +334,7 @@ const Messages = () => {
                 </div>
               </div>
             ) : (
-              <CardTitle>Select a conversation</CardTitle>
+              <CardTitle>{t('Sélectionnez une conversation')}</CardTitle>
             )}
           </CardHeader>
 
@@ -346,8 +346,8 @@ const Messages = () => {
                   <div className="space-y-4">
                     {messages.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
-                        <div className="text-lg font-semibold mb-2">{t('No messages yet')}</div>
-                        <div className="text-sm">{t('Start the conversation by sending a message')}</div>
+                        <div className="text-lg font-semibold mb-2">{t('Aucun message pour le moment')}</div>
+                        <div className="text-sm">{t('Commencez la conversation en envoyant un message')}</div>
                       </div>
                     ) : (
                       messages.map((message, index) => {
@@ -463,8 +463,9 @@ const Messages = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <div className="text-lg font-semibold mb-2">{t('No conversation selected')}</div>
-                  <div className="text-sm">{t('Choose a conversation from the list to start messaging')}</div>
+                  <div className="text-lg font-semibold mb-2">{t('Aucune conversation sélectionnée')}</div>
+                  <div className="text-sm">{t('Choisissez une conversation dans la liste pour commencer à discuter')}</div>
+                                    <Input placeholder={t('Tapez votre message…')} value={text} onChange={(e) => handleTyping(e.target.value)} className="flex-1" />
                 </div>
               </div>
             )}

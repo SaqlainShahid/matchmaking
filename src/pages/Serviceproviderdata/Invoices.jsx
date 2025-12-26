@@ -20,9 +20,17 @@ const Invoices = () => {
       link.target = '_blank';
       // Hint filename for browsers that support it
       link.download = `invoice_${inv.id}.pdf`;
+      // Append to DOM before clicking so browsers honour the download filename
       document.body.appendChild(link);
+      // Click then remove safely — don't assume parentNode is document.body (can be removed by navigation)
       link.click();
-      document.body.removeChild(link);
+      // Defensive removal: only remove if still attached
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      } else if (typeof link.remove === 'function') {
+        // As a last resort, try element.remove() which is safe if not attached
+        try { link.remove(); } catch (_) {}
+      }
     } catch (_) {
       // Fallback: open in new tab
       window.open(inv.invoiceUrl, '_blank');

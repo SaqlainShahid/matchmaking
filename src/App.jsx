@@ -27,6 +27,7 @@ import ProviderMessages from './pages/Serviceproviderdata/Messages'
 import ProviderServices from './pages/Serviceproviderdata/Services'
 import Requests from './pages/ordergiverdata/Requests'
 import RequestDetails from './pages/ordergiverdata/RequestDetails'
+import ErrorBoundary from './components/ErrorBoundary'
 import Quotes from './pages/ordergiverdata/Quotes'
 import Checkout from './pages/ordergiverdata/Checkout'    
 import Projects from './pages/ordergiverdata/Projects'    
@@ -76,11 +77,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Routes>
-        <Route
-          path="/"
-          element={<RoleLanding />}
-        />
+      <ErrorBoundary>
+        <Routes>
+          <Route
+            path="/"
+            element={<RoleLanding />}
+          />
         <Route
           path="/login"
           element={user && user.emailVerified ? <RoleLanding /> : <Login />}
@@ -171,7 +173,8 @@ function App() {
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </div>
   )
 }

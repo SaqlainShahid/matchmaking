@@ -13,6 +13,7 @@ import {
   addProjectPhoto,
   addProjectComment
 } from '../services/providerservices/providerService';
+import { normalizeRequest } from '../lib/requestUtils';
 import { markInvoicePaid } from '../services/providerservices/providerService';
 import { registerFcmTokenForCurrentUser } from '../services/fcmService';
 
@@ -80,13 +81,15 @@ export const ProviderProvider = ({ children }) => {
       const serviceType = profile?.serviceType || '';
       const serviceArea = profile?.serviceArea || '';
       unsubRequests = subscribeToProviderOpenRequests(uid, serviceType, serviceArea, (list) => {
-        setRequests(list);
-        const pendingCount = list.filter(r => r.status === 'pending').length;
-        const activeCount = list.filter(r => r.status === 'in_progress' && r.providerId === uid).length;
-        const completedCount = list.filter(r => r.status === 'completed').length;
+        // Normalize incoming requests
+        const normalized = (list || []).map(r => normalizeRequest(r));
+        setRequests(normalized);
+        const pendingCount = normalized.filter(r => r.status === 'pending').length;
+        const activeCount = normalized.filter(r => r.status === 'in_progress' && r.providerId === uid).length;
+        const completedCount = normalized.filter(r => r.status === 'completed').length;
         setStats(prev => ({
           ...prev,
-          totalRequests: list.length,
+          totalRequests: normalized.length,
           pendingQuotes: pendingCount,
           activeProjects: activeCount,
           completedProjects: completedCount

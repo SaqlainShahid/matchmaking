@@ -132,14 +132,38 @@ export const getServiceProviders = async (filters = {}) => {
 // Find providers matching a service type and (optionally) area
 export const getMatchingProviders = async (serviceType, area = '') => {
   try {
-    let q = query(
-      collection(db, USERS_COLLECTION),
-      where('role', 'in', ['service_provider', 'provider']),
-      where('serviceType', '==', serviceType)
-    );
+    // Perform two queries to support both legacy `serviceType` field and the newer `services` array
+    const providersMap = new Map();
 
-    const querySnapshot = await getDocs(q);
-    const providers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Query by serviceType field
+    try {
+      const q1 = query(
+        collection(db, USERS_COLLECTION),
+        where('role', 'in', ['service_provider', 'provider']),
+        where('serviceType', '==', serviceType)
+      );
+      const snap1 = await getDocs(q1);
+      snap1.docs.forEach(d => providersMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch (err) {
+      // ignore individual query failures
+      console.warn('serviceType query failed:', err);
+    }
+
+    // Query by services array (array-contains)
+    try {
+      const q2 = query(
+        collection(db, USERS_COLLECTION),
+        where('role', 'in', ['service_provider', 'provider']),
+        where('services', 'array-contains', serviceType)
+      );
+      const snap2 = await getDocs(q2);
+      snap2.docs.forEach(d => providersMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch (err) {
+      console.warn('services array query failed:', err);
+    }
+
+    let providers = Array.from(providersMap.values());
+
     if (!area) return providers;
     const areaLower = String(area).toLowerCase();
     return providers.filter(p => {

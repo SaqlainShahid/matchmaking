@@ -49,7 +49,7 @@ const AdminMessages = () => {
   const onSend = async () => {
     if (!conversationId || !text.trim()) return;
     setSending(true);
-    try { await sendMessage(conversationId, { text: text.trim() }); setText(''); } catch (e) { console.error(e); }
+    try { await sendMessage(conversationId, text.trim()); setText(''); } catch (e) { console.error(e); }
     finally { setSending(false); }
   };
 
@@ -63,10 +63,10 @@ const AdminMessages = () => {
       <div className="md:col-span-1 space-y-4">
         <Card className="card">
           <CardHeader className="card-header">
-            <CardTitle>{t('Users')}</CardTitle>
+            <CardTitle>{t('Utilisateurs')}</CardTitle>
           </CardHeader>
           <CardContent className="card-content space-y-3">
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('Search users by name or email')} />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('Rechercher des utilisateurs par nom ou e-mail')} />
             <ScrollArea className="h-[420px]">
               <ul className="space-y-2">
                 {filteredUsers.map((u) => (
@@ -78,7 +78,7 @@ const AdminMessages = () => {
                       <Avatar className="h-8 w-8"><AvatarFallback>{(u.name||u.email||'U')[0].toUpperCase()}</AvatarFallback></Avatar>
                       <div className="text-left">
                         <div className="text-sm font-medium text-gray-900">{u.name || u.email || u.id}</div>
-                        <div className="text-xs text-gray-500">{u.role || t('User')}</div>
+                        <div className="text-xs text-gray-500">{u.role || t('Utilisateur')}</div>
                       </div>
                     </button>
                   </li>
@@ -96,7 +96,7 @@ const AdminMessages = () => {
           </CardHeader>
           <CardContent className="card-content">
             {!selectedUser ? (
-              <div className="text-sm text-gray-500">{t('Select a user to start a conversation.')}</div>
+              <div className="text-sm text-gray-500">{t('Sélectionnez un utilisateur pour démarrer une conversation.')}</div>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -110,10 +110,12 @@ const AdminMessages = () => {
                   <ScrollArea className="h-[360px] p-3">
                     <div className="space-y-2">
                       {messages.length === 0 ? (
-                        <div className="text-sm text-gray-500">{t('No messages yet')}</div>
+                        <div className="text-sm text-gray-500">{t('Aucun message pour le moment')}</div>
                       ) : messages.map((m) => (
                         <div key={m.id || m.createdAt} className={`max-w-[70%] p-2 rounded-md ${m.senderId===selectedUser.id?'bg-gray-100':'bg-blue-50 ml-auto'}`}>
-                          <div className="text-sm text-gray-800 whitespace-pre-wrap">{m.text}</div>
+                          <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                            {typeof m.text === 'string' ? m.text : (m.text && m.text.text ? m.text.text : '')}
+                          </div>
                           <div className="text-[10px] text-gray-500 mt-1">{new Date(m.createdAt || Date.now()).toLocaleString()}</div>
                         </div>
                       ))}
@@ -123,9 +125,9 @@ const AdminMessages = () => {
                     <Input
                       value={text}
                       onChange={(e) => { setText(e.target.value); try { setTyping(conversationId, true); } catch (e) { console.error(e); } }}
-                      placeholder={t('Type a message')}
+                      placeholder={t('Tapez votre message…')}
                     />
-                    <Button onClick={onSend} disabled={sending || !text.trim()} className="btn-primary">{t('Send')}</Button>
+                    <Button onClick={onSend} disabled={sending || !text.trim()} className="btn-primary">{t('Envoyer')}</Button>
                   </div>
                 </div>
               </div>

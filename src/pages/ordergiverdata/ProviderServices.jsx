@@ -92,7 +92,7 @@ const ProviderServices = () => {
                     </Badge>
                   )}
                   <Badge className="text-xs flex items-center">
-                    <FiDollarSign className="h-3 w-3 mr-1" /> ${(svc.price ?? 0).toLocaleString?.() || (svc.price ?? 0)} {svc.currency || 'USD'}
+                    <FiDollarSign className="h-3 w-3 mr-1" /> {Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(svc.price ?? 0)}
                   </Badge>
                 </div>
               </CardHeader>

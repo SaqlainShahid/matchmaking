@@ -29,7 +29,7 @@ const Payments = () => {
           <h3 className="font-semibold text-gray-900">{t('Payments & Invoices')}</h3>
           <button className="text-blue-700 hover:underline" onClick={handleStripeSync}>{t('Sync Stripe')}</button>
         </div>
-        <p className="text-sm text-gray-600">{t('Total Revenue')}: <span className="font-semibold">${Number(total).toFixed(2)}</span></p>
+        <p className="text-sm text-gray-600">{t('Total Revenue')}: <span className="font-semibold">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(total))}</span></p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -53,7 +53,7 @@ const Payments = () => {
               <tr key={i.id} className="border-t">
                 <td className="px-4 py-2">{i.id}</td>
                 <td className="px-4 py-2">{i.requestId || '—'}</td>
-                <td className="px-4 py-2">${Number(i.amount || 0).toFixed(2)}</td>
+                <td className="px-4 py-2">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(i.amount || 0))}</td>
                 <td className="px-4 py-2">{i.status || 'pending'}</td>
                 <td className="px-4 py-2">
                   {i.status !== 'paid' && (

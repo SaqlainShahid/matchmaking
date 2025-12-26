@@ -31,11 +31,14 @@ const INVOICES_COLLECTION = 'invoices';
 export const createRequest = async (userId, requestData) => {
   try {
     const requestRef = doc(collection(db, REQUESTS_COLLECTION));
+    // Normalize and include creator's display info when available
     const requestWithMetadata = {
       ...requestData,
       id: requestRef.id,
       createdBy: userId,
-      status: 'pending',
+      createdByName: requestData.clientName || requestData.createdByName || requestData.clientName || null,
+      createdByEmail: requestData.clientEmail || requestData.createdByEmail || null,
+      status: requestData.status || 'pending',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       responses: 0,
@@ -74,34 +77,47 @@ export const getRequestById = async (requestId) => {
   }
 };
 
-export const getUserRequests = async (userId, status = null) => {
+export const getUserRequests = async (userId, statut = null) => {
   try {
-    let q;
-    if (status) {
-      q = query(
-        collection(db, REQUESTS_COLLECTION),
-        where('createdBy', '==', userId),
-        where('status', '==', status),
-        orderBy('createdAt', 'desc')
-      );
+    // We need to support requests where the user may be referenced in either `createdBy` or `orderGiverId`.
+    const resultsMap = new Map();
+
+    // Helper to run a query and populate map
+    const runQuery = async (clauses) => {
+      let q = collection(db, 'requests');
+      for (const c of clauses) {
+        q = query(q, where(c.field, c.op || '==', c.value));
+      }
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    };
+
+    if (statut) {
+      // Support both 'status' and legacy 'statut' fields
+      await Promise.all([
+        runQuery([{ field: 'createdBy', value: userId }, { field: 'status', value: statut }]),
+        runQuery([{ field: 'createdBy', value: userId }, { field: 'statut', value: statut }]),
+        runQuery([{ field: 'orderGiverId', value: userId }, { field: 'status', value: statut }]),
+        runQuery([{ field: 'orderGiverId', value: userId }, { field: 'statut', value: statut }])
+      ]);
     } else {
-      q = query(
-        collection(db, REQUESTS_COLLECTION),
-        where('createdBy', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+      await Promise.all([
+        runQuery([{ field: 'createdBy', value: userId }]),
+        runQuery([{ field: 'orderGiverId', value: userId }])
+      ]);
     }
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore timestamps to Date objects
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate()
+    const results = Array.from(resultsMap.values()).map(r => ({
+      ...r,
+      createdAt: r.createdAt?.toDate?.() || r.createdAt,
+      updatedAt: r.updatedAt?.toDate?.() || r.updatedAt
     }));
+
+    // Sort by createdAt desc
+    results.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return results;
   } catch (error) {
-    console.error('Error getting user requests:', error);
+    console.error('Erreur lors de la récupération des demandes:', error);
     throw error;
   }
 };

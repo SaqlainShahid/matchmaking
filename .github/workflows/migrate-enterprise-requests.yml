@@ -1,0 +1,64 @@
+name: Migrate enterpriseRequests → requests
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Set to "yes" to apply changes; default is a dry-run'
+        required: true
+        default: 'no'
+      deleteLegacy:
+        description: 'Set to "yes" to delete legacy entrepriseRequests after update (requires apply)'
+        required: false
+        default: 'no'
+      createMissing:
+        description: 'Set to "yes" to create missing requests when no match found (requires apply)'
+        required: false
+        default: 'no'
+      limit:
+        description: 'Optional: limit number of docs to process (for testing)'
+        required: false
+        default: '0'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migration script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -e
+          echo "Inputs: apply=${{ github.event.inputs.apply }}, deleteLegacy=${{ github.event.inputs.deleteLegacy }}, createMissing=${{ github.event.inputs.createMissing }}, limit=${{ github.event.inputs.limit }}"
+          CMD='node scripts/migrate_enterprise_requests.js --dry-run'
+          if [ "${{ github.event.inputs.apply }}" = "yes" ]; then
+            CMD='node scripts/migrate_enterprise_requests.js --apply'
+          fi
+          if [ "${{ github.event.inputs.deleteLegacy }}" = "yes" ]; then
+            CMD="$CMD --delete-legacy"
+          fi
+          if [ "${{ github.event.inputs.createMissing }}" = "yes" ]; then
+            CMD="$CMD --create-missing"
+          fi
+          if [ "${{ github.event.inputs.limit }}" != "0" ]; then
+            CMD="$CMD --limit=${{ github.event.inputs.limit }}"
+          fi
+          echo "Running: $CMD"
+          $CMD
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-migration-report
+          path: migration-report-enterprise-requests.json

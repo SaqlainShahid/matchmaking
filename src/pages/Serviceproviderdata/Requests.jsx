@@ -7,10 +7,13 @@ import { Modal } from "../../components/ui/modal";
 import { CheckCircle2 } from 'lucide-react';
 import { isImageUrl, thumbnailUrl } from '../../services/cloudinaryService';
 import { t } from '../../lib/i18n';
+import { normalizeRequest } from '../../lib/requestUtils';
+import ChatModal from '../../components/ChatModal';
+import { useToast } from '../../components/ui/use-toast';
 
 const Requests = () => {
   const ctx = useProvider();
-  const requests = ctx?.requests || [];
+  const requests = (ctx?.requests || []).map(r => normalizeRequest(r));
   const createQuote = ctx?.createQuote || (async () => {});
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,7 +23,9 @@ const Requests = () => {
   const [filters, setFilters] = useState({ serviceType: '', urgency: '', location: '', date: 'all', q: '' });
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const { toast } = useToast();
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ amount: '', duration: '', note: '', package: 'standard', deliverySpeed: '2_days', revisions: 1, includeMaterials: false });
   const [, setFiles] = useState([]);
   const [showQuoteSuccess, setShowQuoteSuccess] = useState(false);
@@ -108,7 +113,7 @@ const Requests = () => {
       });
       setShowQuoteSuccess(true);
     } catch (err) {
-      console.error('Quote submission failed:', err);
+      // ...existing code...
     }
   };
 
@@ -179,6 +184,21 @@ const Requests = () => {
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => { setSelectedRequest(req); setShowDetails(true); }}>{t('View')}</Button>
                     <Button onClick={() => { setSelectedRequest(req); setShowQuoteModal(true); }}>{t('Submit Quote')}</Button>
+                    <Button variant="ghost" onClick={() => {
+                      setSelectedRequest(req);
+                      // If request owner is not a registered user, show helpful message instead of opening chat
+                      const ownerId = req.createdBy || req.orderGiverId || null;
+                      if (ownerId) {
+                        // Navigate to provider messages page and pre-open conversation for that user
+                        navigate(`/provider/messages?otherUserId=${ownerId}&requestId=${req.id}`);
+                      } else {
+                        toast({
+                          title: t('Messaging unavailable'),
+                          description: t('The request owner is not registered. Use the contact details shown in the request to reach them.'),
+                          variant: 'destructive'
+                        });
+                      }
+                    }}>{t('Message')}</Button>
                   </div>
                 </div>
               ))
@@ -187,122 +207,175 @@ const Requests = () => {
         </CardContent>
       </Card>
       {/* Request Details Modal */}
-      {showDetails && selectedRequest && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full sm:max-w-lg md:max-w-2xl lg:max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-900">{selectedRequest.title || t('Request Details')}</h3>
-            <p className="text-sm text-gray-700 mt-2">{selectedRequest.description || t('No description provided.')}</p>
-            <div className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center">
-                  <span className="w-28 text-gray-500">{t('Service')}</span>
-                  <span className="text-gray-900">{selectedRequest.serviceType || '—'}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="w-28 text-gray-500">{t('Urgency')}</span>
-                  <span className="text-gray-900">{selectedRequest.priority || '—'}</span>
-                </div>
-                <div className="md:col-span-2 flex items-center">
-                  <span className="w-28 text-gray-500">{t('Location')}</span>
-                  <span className="text-gray-900">{String(selectedRequest?.location?.address || '—')}</span>
-                </div>
+      <Modal open={showDetails} onClose={() => setShowDetails(false)} title={selectedRequest?.title || t('Request Details')}>
+        <div className="space-y-4">
+          <div className="text-sm text-gray-700">
+            <p className="whitespace-pre-wrap">{selectedRequest?.description || t('No description provided.')}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Service')}</div>
+              <div className="text-gray-900">{selectedRequest?.serviceType || '—'}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Urgency')}</div>
+              <div className="text-gray-900">{selectedRequest?.priority || '—'}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Location')}</div>
+              <div className="text-gray-900">{String(selectedRequest?.location?.address || '—')}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Budget')}</div>
+              <div className="text-gray-900">{(selectedRequest?.budget != null) ? `${selectedRequest.budget} ${selectedRequest.currency || 'EUR'}` : '—'}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Cost Center')}</div>
+              <div className="text-gray-900">{selectedRequest?.costCenter || '—'}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Scheduled')}</div>
+              <div className="text-gray-900">
+                {selectedRequest?.scheduledDate ? (
+                  (typeof selectedRequest.scheduledDate?.toDate === 'function')
+                    ? selectedRequest.scheduledDate.toDate().toLocaleString()
+                    : new Date(selectedRequest.scheduledDate).toLocaleString()
+                ) : '—'}
               </div>
             </div>
-            {Array.isArray(selectedRequest.attachments) && selectedRequest.attachments.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-medium text-gray-900 mb-2">{t('Attachments')}</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {selectedRequest.attachments.map((url, i) => (
-                    <a
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group border rounded-md p-2 flex items-center gap-3 hover:bg-gray-50"
-                    >
-                      {isImageUrl(url) ? (
-                        <img
-                          src={thumbnailUrl(url, { width: 120, height: 90 })}
-                          alt={`Attachment ${i + 1}`}
-                          className="h-16 w-20 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="h-16 w-20 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-xs">
-                          {t('DOC')}
-                        </div>
-                      )}
-                      <span className="text-blue-600 truncate group-hover:underline">{t('Attachment')} {i + 1}</span>
-                    </a>
-                  ))}
-                </div>
+
+            <div className="flex items-start md:col-span-2">
+              <div className="w-28 text-gray-500">{t('Contact')}</div>
+              <div className="text-gray-900">
+                <div>{selectedRequest?.contact?.person || selectedRequest?.createdByName || '—'}</div>
+                <div className="text-sm text-gray-500">{selectedRequest?.contact?.phone || ''} {selectedRequest?.contact?.email ? `• ${selectedRequest.contact.email}` : ''}</div>
               </div>
-            )}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDetails(false)}>{t('Close')}</Button>
-              <Button onClick={() => { setShowDetails(false); setShowQuoteModal(true); }}>{t('Submit Quote')}</Button>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Posted')}</div>
+              <div className="text-gray-900">{selectedRequest?.createdAt ? (selectedRequest.createdAt instanceof Date ? selectedRequest.createdAt.toLocaleString() : String(selectedRequest.createdAt)) : '—'}</div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-28 text-gray-500">{t('Status')}</div>
+              <div className="text-gray-900">{selectedRequest?.status || selectedRequest?.statut || '—'}</div>
             </div>
           </div>
+
+          {((selectedRequest?.files && selectedRequest.files.length) || (selectedRequest?.attachments && selectedRequest.attachments.length) || (selectedRequest?.fichiers && selectedRequest.fichiers.length)) && (
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">{t('Attachments')}</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {(selectedRequest.files || selectedRequest.attachments || selectedRequest.fichiers).map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group border rounded-md p-2 flex items-center gap-3 hover:bg-gray-50"
+                  >
+                    {isImageUrl(url) ? (
+                      <img
+                        src={thumbnailUrl(url, { width: 120, height: 90 })}
+                        alt={`Attachment ${i + 1}`}
+                        className="h-16 w-20 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="h-16 w-20 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-xs">
+                        {t('DOC')}
+                      </div>
+                    )}
+                    <span className="text-blue-600 truncate group-hover:underline">{t('Attachment')} {i + 1}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowDetails(false)}>{t('Close')}</Button>
+            <Button onClick={() => { setShowDetails(false); setShowQuoteModal(true); }}>{t('Submit Quote')}</Button>
+          </div>
         </div>
+      </Modal>
+
+      {/* Chat Modal */}
+      {selectedRequest && (
+        <ChatModal
+          open={showChat}
+          onClose={() => setShowChat(false)}
+          otherUserId={selectedRequest?.createdBy || selectedRequest?.orderGiverId}
+          otherUserName={selectedRequest?.createdByName || selectedRequest?.contact?.person || selectedRequest?.createdByEmail}
+          requestId={selectedRequest?.id}
+        />
       )}
 
       {/* Inline Quote Modal */}
-      {showQuoteModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full sm:max-w-lg md:max-w-2xl lg:max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-900">{t('Submit Professional Quote')}</h3>
-            <p className="text-sm text-gray-700 mt-2">{t('Provide a clear offer including timing and scope.')}</p>
-            <form onSubmit={submitInlineQuote} className="space-y-6 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Amount (USD)')}</label>
-                  <input className="border rounded-md p-2 w-full" type="number" placeholder="0.00" value={quoteForm.amount} onChange={(e) => setQuoteForm({ ...quoteForm, amount: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Delivery Speed')}</label>
-                  <select className="border rounded-md p-2 w-full" value={quoteForm.deliverySpeed} onChange={(e) => setQuoteForm({ ...quoteForm, deliverySpeed: e.target.value })}>
-                    <option value="24_hours">{t('24 hours')}</option>
-                    <option value="2_days">{t('2 days')}</option>
-                    <option value="3_5_days">{t('3-5 days')}</option>
-                    <option value="1_week">{t('1 week')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Estimated Duration')}</label>
-                  <input className="border rounded-md p-2 w-full" placeholder={t('e.g., 2 days')} value={quoteForm.duration} onChange={(e) => setQuoteForm({ ...quoteForm, duration: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Package')}</label>
-                  <select className="border rounded-md p-2 w-full" value={quoteForm.package} onChange={(e) => setQuoteForm({ ...quoteForm, package: e.target.value })}>
-                    <option value="basic">{t('Basic')}</option>
-                    <option value="standard">{t('Standard')}</option>
-                    <option value="premium">{t('Premium')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Revisions')}</label>
-                  <input className="border rounded-md p-2 w-full" type="number" min="0" max="5" value={quoteForm.revisions} onChange={(e) => setQuoteForm({ ...quoteForm, revisions: Number(e.target.value) })} />
-                </div>
-                <div className="flex items-center space-x-2 md:col-span-2">
-                  <input id="materials" type="checkbox" checked={quoteForm.includeMaterials} onChange={(e) => setQuoteForm({ ...quoteForm, includeMaterials: e.target.checked })} />
-                  <label htmlFor="materials" className="text-sm text-gray-700">{t('Include materials in the cost')}</label>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Notes')}</label>
-                <textarea className="border rounded-md p-2 w-full" rows="3" placeholder={t('Describe scope, terms, and additional details')} value={quoteForm.note} onChange={(e) => setQuoteForm({ ...quoteForm, note: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Attachments')}</label>
-                <input className="border rounded-md p-2 w-full text-sm" type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => setShowQuoteModal(false)}>{t('Cancel')}</Button>
-                <Button type="submit">{t('Send Quote')}</Button>
-              </div>
-            </form>
+      <Modal
+        open={showQuoteModal}
+        onClose={() => setShowQuoteModal(false)}
+        title={t('Submit Professional Quote')}
+        containerClassName={"relative z-10 w-full max-w-3xl mx-4"}
+        contentClassName={"p-6 max-h-[85vh] overflow-y-auto text-gray-700"}
+      >
+        <p className="text-sm text-gray-700 mt-2">{t('Provide a clear offer including timing and scope.')}</p>
+        <form onSubmit={submitInlineQuote} className="space-y-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Montant (€)')}</label>
+              <input className="border rounded-md p-2 w-full" type="number" min="0" step="0.01" placeholder="0,00" value={quoteForm.amount} onChange={(e) => setQuoteForm({ ...quoteForm, amount: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Delivery Speed')}</label>
+              <select className="border rounded-md p-2 w-full" value={quoteForm.deliverySpeed} onChange={(e) => setQuoteForm({ ...quoteForm, deliverySpeed: e.target.value })}>
+                <option value="24_hours">{t('24 hours')}</option>
+                <option value="2_days">{t('2 days')}</option>
+                <option value="3_5_days">{t('3-5 days')}</option>
+                <option value="1_week">{t('1 week')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Estimated Duration')}</label>
+              <input className="border rounded-md p-2 w-full" placeholder={t('e.g., 2 days')} value={quoteForm.duration} onChange={(e) => setQuoteForm({ ...quoteForm, duration: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Package')}</label>
+              <select className="border rounded-md p-2 w-full" value={quoteForm.package} onChange={(e) => setQuoteForm({ ...quoteForm, package: e.target.value })}>
+                <option value="basic">{t('Basic')}</option>
+                <option value="standard">{t('Standard')}</option>
+                <option value="premium">{t('Premium')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Revisions')}</label>
+              <input className="border rounded-md p-2 w-full" type="number" min="0" max="5" value={quoteForm.revisions} onChange={(e) => setQuoteForm({ ...quoteForm, revisions: Number(e.target.value) })} />
+            </div>
+            <div className="flex items-center space-x-2 md:col-span-2">
+              <input id="materials" type="checkbox" checked={quoteForm.includeMaterials} onChange={(e) => setQuoteForm({ ...quoteForm, includeMaterials: e.target.checked })} />
+              <label htmlFor="materials" className="text-sm text-gray-700">{t('Include materials in the cost')}</label>
+            </div>
           </div>
-        </div>
-      )}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Notes')}</label>
+            <textarea className="border rounded-md p-2 w-full" rows="3" placeholder={t('Describe scope, terms, and additional details')} value={quoteForm.note} onChange={(e) => setQuoteForm({ ...quoteForm, note: e.target.value })} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">{t('Attachments')}</label>
+            <input className="border rounded-md p-2 w-full text-sm" type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={() => setShowQuoteModal(false)}>{t('Cancel')}</Button>
+            <Button type="submit">{t('Send Quote')}</Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Success Modal */}
       <Modal
@@ -327,7 +400,7 @@ const Requests = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('Amount')}</span>
-                <span className="font-semibold text-gray-900">${quoteSuccessInfo.amount}</span>
+                <span className="font-semibold text-gray-900">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quoteSuccessInfo.amount)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('Package')}</span>

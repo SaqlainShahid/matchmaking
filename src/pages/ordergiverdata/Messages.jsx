@@ -437,7 +437,7 @@ const Messages = () => {
                       {otherUser.name}
                       {typingOther && (
                         <Badge variant="outline" className="text-xs animate-pulse">
-                          {t('Typing...')}
+                          {t('En train d\'écrire...')}
                         </Badge>
                       )}
                     </CardTitle>
@@ -472,8 +472,8 @@ const Messages = () => {
                   <div className="space-y-4">
                     {messages.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
-                        <div className="text-lg font-semibold mb-2">{t('No messages yet')}</div>
-                        <div className="text-sm">{t('Start the conversation by sending a message')}</div>
+                        <div className="text-lg font-semibold mb-2">{t('Aucun message pour le moment')}</div>
+                        <div className="text-sm">{t('Commencez la conversation en envoyant un message')}</div>
                       </div>
                     ) : (
                       messages.map((message, index) => {
@@ -552,7 +552,7 @@ const Messages = () => {
                                     isOwn ? 'text-blue-100 justify-end' : 'text-gray-500'
                                   }`}>
                                     <FiClock className="h-3 w-3" />
-                                    {formatMessageTime(message.createdAt)}
+                                                  {message.text || t('Aucun message pour le moment')}
                                     {isOwn && (
                                       Array.isArray(message.readBy) && otherUser?.id && message.readBy.includes(otherUser.id) ? (
                                         <span className="flex items-center gap-1 text-xs text-blue-100">
@@ -623,7 +623,7 @@ const Messages = () => {
                     </Button>
                     
                     <Input
-                      placeholder={t('Type your message...')}
+                      placeholder={t('Tapez votre message…')}
                       value={text}
                       onChange={(e) => handleTyping(e.target.value)}
                       className="flex-1"
@@ -642,8 +642,8 @@ const Messages = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <div className="text-lg font-semibold mb-2">{t('No conversation selected')}</div>
-                  <div className="text-sm">{t('Choose a conversation from the list to start messaging')}</div>
+                  <div className="text-lg font-semibold mb-2">{t('Aucune conversation sélectionnée')}</div>
+                  <div className="text-sm">{t('Choisissez une conversation dans la liste pour commencer à discuter')}</div>
                 </div>
               </div>
             )}

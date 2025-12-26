@@ -167,15 +167,28 @@ export const getProviderDocuments = async (providerId) => {
 };
 
 // Requests
-export const getAllRequests = async (status = null) => {
-  let q;
-  if (status) {
-    q = query(collection(db, REQUESTS), where('status', '==', status), orderBy('createdAt', 'desc'));
-  } else {
-    q = query(collection(db, REQUESTS), orderBy('createdAt', 'desc'));
+export const getAllRequests = async (statut = null) => {
+  // Read from unified 'requests' collection. Support filtering by 'status' (preferred) or legacy 'statut'.
+  try {
+    if (!statut) {
+      const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    // If a status filter is provided, run two queries and merge results (status and statut)
+    const snapStatus = await getDocs(query(collection(db, 'requests'), where('status', '==', statut), orderBy('createdAt', 'desc'))).catch(() => ({ docs: [] }));
+    const snapStatut = await getDocs(query(collection(db, 'requests'), where('statut', '==', statut), orderBy('createdAt', 'desc'))).catch(() => ({ docs: [] }));
+
+    const map = new Map();
+    snapStatus.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+    snapStatut.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+
+    return Array.from(map.values());
+  } catch (error) {
+    console.error('Error getting all requests:', error);
+    return [];
   }
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
 export const updateRequestStatusAdmin = async (requestId, status) => {

@@ -121,7 +121,7 @@ const ProviderServiceDetailAdmin = () => {
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm text-gray-600">{t('Price')}</div>
-                  <div className="text-gray-900 font-medium">{service.currency || 'USD'}{service.price || 0}</div>
+                  <div className="text-gray-900 font-medium">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(service.price || 0)}</div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm text-gray-600">{t('Tags')}</div>

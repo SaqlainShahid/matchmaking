@@ -11,11 +11,12 @@ import { Input } from "./ui/input";
 import { Modal } from "./ui/modal";
 import { Search, Clock, AlertCircle, CheckCircle, XCircle, MessageSquare, DollarSign, Calendar } from 'lucide-react';
 import { t } from '../lib/i18n';
+import { normalizeRequest } from '../lib/requestUtils';
 
 const RequestList = () => {
   const navigate = useNavigate();
   const { 
-    requests, 
+    requests: rawRequests, 
     loading, 
     stats, 
     activeTab, 
@@ -24,6 +25,8 @@ const RequestList = () => {
     markRequestAsCompleted,
     rateCompletedRequest
   } = useOrderGiver();
+  // Normalize requests so components use consistent fields
+  const requests = (rawRequests || []).map(r => normalizeRequest(r));
   
   const [searchTerm, setSearchTerm] = useState('');
   const [rating, setRating] = useState(0);
@@ -39,38 +42,61 @@ const RequestList = () => {
     setSearchTerm(q);
   }, [location.search]);
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (statusOrStatut) => {
     const statusMap = {
-      pending: { 
-        text: 'Pending Quotes', 
+      // legacy french statuses
+      en_attente: {
+        text: 'En attente',
         className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
         icon: <Clock className="h-4 w-4 mr-1" />
       },
-      in_progress: { 
-        text: 'In Progress', 
-        className: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-        icon: <AlertCircle className="h-4 w-4 mr-1" />
-      },
-      completed: { 
-        text: 'Completed', 
+      approuvée: {
+        text: 'Approuvée',
         className: 'bg-green-100 text-green-800 hover:bg-green-200',
         icon: <CheckCircle className="h-4 w-4 mr-1" />
       },
-      cancelled: { 
-        text: 'Cancelled', 
-        className: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+      rejetée: {
+        text: 'Rejetée',
+        className: 'bg-red-100 text-red-800 hover:bg-red-200',
         icon: <XCircle className="h-4 w-4 mr-1" />
+      },
+      // english statuses
+      pending: {
+        text: 'Pending',
+        className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
+        icon: <Clock className="h-4 w-4 mr-1" />
+      },
+      approved: {
+        text: 'Approved',
+        className: 'bg-green-100 text-green-800 hover:bg-green-200',
+        icon: <CheckCircle className="h-4 w-4 mr-1" />
+      },
+      rejected: {
+        text: 'Rejected',
+        className: 'bg-red-100 text-red-800 hover:bg-red-200',
+        icon: <XCircle className="h-4 w-4 mr-1" />
+      },
+      in_progress: {
+        text: 'In Progress',
+        className: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+        icon: <Clock className="h-4 w-4 mr-1" />
+      },
+      completed: {
+        text: 'Completed',
+        className: 'bg-green-100 text-green-800 hover:bg-green-200',
+        icon: <CheckCircle className="h-4 w-4 mr-1" />
       }
     };
-    return statusMap[status] || { text: status, className: 'bg-gray-100' };
+    return statusMap[statusOrStatut] || { text: statusOrStatut, className: 'bg-gray-100' };
   };
 
   const filteredRequests = requests.filter(request => {
     const matchesSearch =
-      request.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.title || request.titre || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (request.description || '')?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesTab = activeTab === 'all' ? true : request.status === activeTab;
+    const currentStatus = request.status || request.statut;
+    const matchesTab = activeTab === 'all' ? true : currentStatus === activeTab;
 
     return matchesSearch && matchesTab;
   });
@@ -148,23 +174,23 @@ const RequestList = () => {
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all" aria-label="All requests">
-              <span>{t('All')}</span>
-              <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.length}</span>
-            </TabsTrigger>
-            <TabsTrigger value="pending" aria-label="Pending requests">
-              <span>{t('Pending')}</span>
-              <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'pending').length}</span>
-            </TabsTrigger>
-            <TabsTrigger value="in_progress" aria-label="In-progress requests">
-              <span>{t('In Progress')}</span>
-              <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'in_progress').length}</span>
-            </TabsTrigger>
-            <TabsTrigger value="completed" aria-label="Completed requests">
-              <span>{t('Completed')}</span>
-              <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => r.status === 'completed').length}</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all" aria-label="Toutes les demandes">
+            <span>{t('Toutes')}</span>
+            <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="pending" aria-label="Demandes en attente">
+            <span>{t('En attente')}</span>
+            <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => (r.status || r.statut) === 'pending').length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="in_progress" aria-label="Demandes en cours">
+            <span>{t('En cours')}</span>
+            <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => (r.status || r.statut) === 'in_progress').length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="completed" aria-label="Demandes terminées">
+            <span>{t('Terminées')}</span>
+            <span className="ml-2 text-xs font-medium rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">{requests.filter(r => (r.status || r.statut) === 'completed').length}</span>
+          </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -249,11 +275,12 @@ const RequestList = () => {
 
       <div className="space-y-4">
         {filteredRequests.map((request) => {
-          const status = getStatusBadge(request.status);
-          const isCompleted = request.status === 'completed';
-          const isInProgress = request.status === 'in_progress';
-          const isPending = request.status === 'pending';
+          const currentStatus = request.status || request.statut;
+          const status = getStatusBadge(currentStatus);
           const hasAcceptedQuote = !!request.acceptedQuote;
+          const isPending = currentStatus === 'pending' || currentStatus === 'en_attente';
+          const isInProgress = currentStatus === 'in_progress' || currentStatus === 'en_cours';
+          const isCompleted = currentStatus === 'completed' || currentStatus === 'approuvée' || currentStatus === 'terminee';
 
           return (
             <Card 
@@ -262,23 +289,23 @@ const RequestList = () => {
               onClick={() => handleViewRequest(request.id)}
             >
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {request.title || t('Untitled Request')}
-                    <Badge className={status.className}>
-                      {status.icon}
-                      {status.text}
-                    </Badge>
-                  </CardTitle>
-                  <div className="text-sm text-gray-500 flex items-center">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {formatDistanceToNow(request.createdAt, { addSuffix: true })}
-                  </div>
-                </div>
-              </CardHeader>
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-lg flex items-center gap-2">
+                {request.title || request.titre || t('Demande sans titre')}
+                <Badge className={status.className}>
+                  {status.icon}
+                  {status.text}
+                </Badge>
+              </CardTitle>
+              <div className="text-sm text-gray-500 flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                {formatDistanceToNow(request.createdAt, { addSuffix: true })}
+              </div>
+            </div>
+          </CardHeader>
               <CardContent className="pb-2">
                 <p className="text-gray-600 line-clamp-2">
-                  {request.description || t('No description provided')}
+                  {request.description || t('Aucune description fournie')}
                 </p>
                 
                 <div className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -287,16 +314,16 @@ const RequestList = () => {
                     {request.scheduledDate || t('No date set')}
                   </Badge>
                   
-                  {request.serviceType && (
+                  { (request.serviceType || request.typeService) && (
                     <Badge variant="outline">
-                      {request.serviceType}
+                      {request.serviceType || request.typeService}
                     </Badge>
                   )}
                   
-                  {hasAcceptedQuote && (
+                  {(typeof request.budget === 'number' || typeof request.prix === 'number') && (
                     <Badge variant="outline">
                       <DollarSign className="h-3.5 w-3.5 mr-1" />
-                      ${request.acceptedQuote.price}
+                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(request.budget || request.prix)}
                     </Badge>
                   )}
                 </div>

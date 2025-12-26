@@ -288,7 +288,7 @@ const Quotes = () => {
                         </div>
                         <div className="flex items-center text-sm text-gray-600 mb-2">
                           <DollarSign className="h-4 w-4 mr-1 text-green-600" />
-                          <span className="font-semibold text-gray-900">${(quote.amount ?? quote.price ?? 0).toLocaleString?.() || (quote.amount ?? quote.price ?? 0)}</span>
+                          <span className="font-semibold text-gray-900">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amount ?? quote.price ?? 0)}</span>
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-2">
                           {quote.note || quote.message || t('No message provided')}
@@ -571,7 +571,7 @@ const Quotes = () => {
             <p className="text-sm text-gray-700">{t('You are paying for the accepted quote.')}</p>
             <div className="mt-4 text-sm text-gray-600 space-y-2">
               <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{selectedQuote.providerName}</span></div>
-              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
+              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
             </div>
             <div className="mt-6 flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setShowPayModal(false)}>{t('Close')}</Button>

@@ -52,7 +52,7 @@ const Quotes = () => {
               <tr key={q.id} className="border-t">
                 <td className="px-4 py-2">{q.requestId}</td>
                 <td className="px-4 py-2">{q.providerId}</td>
-                <td className="px-4 py-2">${Number(q.amount || 0).toFixed(2)}</td>
+                <td className="px-4 py-2">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(q.amount || 0))}</td>
                 <td className="px-4 py-2">{q.status || 'submitted'}</td>
                 <td className="px-4 py-2">
                   <select className="border rounded-md px-2 py-1" defaultValue={q.status} onChange={e => handleStatus(q.id, e.target.value)}>

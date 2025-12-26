@@ -119,7 +119,8 @@ export const OrderGiverProvider = ({ children }) => {
       };
 
       setStats(stats);
-      setRequests(requestsData);
+      const { normalizeRequest } = await import('../lib/requestUtils').catch(() => ({ normalizeRequest: (x) => x }));
+      setRequests((requestsData || []).map(r => normalizeRequest(r)));
       return requestsData;
     } catch (error) {
       console.error('Error loading requests:', error);

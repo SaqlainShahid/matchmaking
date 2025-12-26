@@ -137,7 +137,7 @@ export default function EnterpriseNotificationPopup() {
       try {
         const permission = await requestNotificationPermission();
         if (permission === 'granted') {
-          console.log('🔔 Enterprise notifications enabled');
+          // ...existing code...
         }
       } catch (error) {
         console.error('Error setting up enterprise notifications:', error);
@@ -305,7 +305,7 @@ export default function EnterpriseNotificationPopup() {
                       <button
                         onClick={() => {
                           // Handle action
-                          console.log('Action triggered:', notification.action);
+                          // ...existing code...
                           removeNotification(notification.id);
                         }}
                         className="text-xs font-medium text-blue-600 hover:text-blue-700 underline"

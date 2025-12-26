@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebaseConfig';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { uploadToCloudinary } from '../services/cloudinaryService';
+import { createRequest } from '../services/ordergiverservices/orderGiverService';
 import { useAuth } from '../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import { Loader2, Building2, Clock, MapPin, Calendar, Upload, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
@@ -180,7 +179,12 @@ export default function EnterpriseRequestForm() {
 
   const uploadFile = async (file) => {
     try {
-      const url = await uploadToCloudinary(file.fileObj || file, { folder: `requests/${currentUser?.uid || 'anonymous'}` });
+      const url = await uploadToCloudinary(file.fileObj || file, {
+        folder: `requests/${currentUser?.uid || 'anonymous'}`,
+        onProgress: (percent) => {
+          setFiles(prev => prev.map(f => f.id === file.id ? { ...f, progress: percent } : f));
+        }
+      });
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, progress: 100 } : f));
       return url;
     } catch (error) {
@@ -220,54 +224,33 @@ export default function EnterpriseRequestForm() {
       
       const fileUrls = await Promise.all(uploadPromises);
       
-      // Create request in Firestore - USING THE MAIN 'requests' COLLECTION
-      const requestData = {
+      // Build a single normalized request document in the `requests` collection.
+      // Preserve enterprise fields inside the document for compatibility with existing dashboards.
+      const requestPayload = {
         title: formData.title,
         description: formData.description,
         serviceType: formData.serviceType,
         priority: formData.priority,
-        status: 'pending', // Using 'pending' instead of 'pending_review' to match dashboard
-        createdBy: currentUser.uid,
-        
         costCenter: formData.costCenter,
-        location: {
-          address: formData.location,
-        },
         budget: formData.budget ? parseFloat(formData.budget) : null,
-        contactInfo: {
+        currency: 'EUR',
+        // location as a normalized object
+        location: { address: formData.location },
+        contact: {
           person: formData.contactPerson,
           phone: (formData.contactPhone?.startsWith('+33') ? formData.contactPhone : (`+33 ${formData.contactPhone || ''}`)).trim(),
           email: currentUser.email,
         },
-        attachments: fileUrls,
-        responses: 0,
-        quotes: [],
-        metadata: {
-          ipAddress: '',
-          userAgent: navigator.userAgent,
-          submissionType: 'enterprise',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        files: fileUrls,
       };
-      
-      // Submit to main 'requests' collection
-      const requestRef = await addDoc(collection(db, 'requests'), requestData);
-      
-      // Update user's requests array in the main 'users' collection
-      if (currentUser?.uid) {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
-          requests: arrayUnion(requestRef.id),
-          updatedAt: serverTimestamp(),
-        });
-      }
-      
+
+      // Create the request using central service helper so all dashboards stay consistent
+      const newRequest = await createRequest(currentUser.uid, requestPayload);
+
       // Fire-and-forget: notify current user about request creation
       try {
         await sendNotification(currentUser.uid, 'REQUEST_CREATED', {
-          requestId: requestRef.id,
+          requestId: newRequest.id,
           requestTitle: formData.title || t('Service Request')
         });
       } catch (notifyErr) {
@@ -277,10 +260,11 @@ export default function EnterpriseRequestForm() {
       // Broadcast to matching providers (category + area)
       try {
         const providers = await getMatchingProviders(formData.serviceType, formData.location);
+        const notifyId = newRequest.id;
         await Promise.all(
           providers.map((p) =>
             sendNotification(p.id, 'NEW_REQUEST_AVAILABLE', {
-              requestId: requestRef.id,
+              requestId: notifyId,
               requestTitle: formData.title || t('Service Request'),
               serviceType: formData.serviceType
             })
@@ -290,7 +274,7 @@ export default function EnterpriseRequestForm() {
         console.warn('Provider broadcast failed:', err);
       }
 
-      setSubmittedRequest({ id: requestRef.id, title: formData.title });
+      setSubmittedRequest({ id: newRequest.id, title: formData.title });
       setShowSuccessModal(true);
       
     } catch (error) {
@@ -690,7 +674,7 @@ export default function EnterpriseRequestForm() {
                             </p>
                             <span className="text-gray-300">•</span>
                             <p className="text-sm text-gray-500 capitalize">
-                              {file.type.split('/')[1] || file.type}
+                              {(file.type && file.type.split ? (file.type.split('/')[1] || file.type) : '')}
                             </p>
                           </div>
                           {file.error && (
@@ -923,5 +907,3 @@ export default function EnterpriseRequestForm() {
 // Modals
 // Cancel confirmation modal
 // Success submission modal
-
-// Inject modals near the bottom inside the component before return is not possible without refactor; we render them just above the closing tags
