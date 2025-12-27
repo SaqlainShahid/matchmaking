@@ -286,16 +286,16 @@ const Services = () => {
                 <input className="border rounded-md p-2 w-full" type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">{t('Devise')}</label> 
+                <label className="text-sm font-medium text-gray-700">{t('Devise')}</label>
                 <input className="border rounded-md p-2 w-full bg-gray-100" value="EUR" disabled />
               </div>
               <div>
                 <span className="text-gray-600">{t('Title')}</span>
-                <span className="font-medium text-gray-900">{successInfo.title}</span>
+                <span className="font-medium text-gray-900">{successInfo?.title || '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('Status')}</span>
-                <span className="text-gray-900">{successInfo.status}</span>
+                <span className="text-gray-900">{successInfo?.status || '—'}</span>
               </div>
             </>
           )}

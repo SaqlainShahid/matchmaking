@@ -72,6 +72,12 @@ export const getProvidersForVerification = async (status = 'pending') => {
     });
   }
 
+  // Treat explicitly verified users as approved too so older documents without
+  // verificationStatus but with `verified: true` are included in the approved list.
+  if (status === 'approved') {
+    return providers.filter(p => p.verificationStatus === 'approved' || p.verified === true);
+  }
+
   return providers.filter(p => p.verificationStatus === status);
 };
 

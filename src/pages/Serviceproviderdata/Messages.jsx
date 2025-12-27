@@ -195,6 +195,18 @@ const Messages = () => {
     return format(date, 'MMM dd');
   };
 
+  // Safely render message-like values that may sometimes be objects.
+  const renderTextContent = (val) => {
+    if (val === null || val === undefined) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') {
+      // Some legacy messages may store { text: '...' } or richer objects
+      if (typeof val.text === 'string') return val.text;
+      try { return JSON.stringify(val); } catch { return String(val); }
+    }
+    return String(val);
+  }; 
+
   // Filter conversations based on search
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
@@ -279,8 +291,8 @@ const Messages = () => {
                             </div>
                           </div>
                           <div className="text-xs text-gray-600 truncate mb-1">
-                            {c.lastMessage?.text || t('No messages yet')}
-                          </div>
+                            {renderTextContent(c.lastMessage?.text) || t('No messages yet')}
+                          </div> 
                           {profile?.companyName && (
                             <div className="text-xs text-gray-500 truncate">
                               {profile.companyName}
@@ -371,7 +383,7 @@ const Messages = () => {
 
                             <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%]`}>
                               <div className={`relative px-4 py-2 rounded-2xl ${isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-gray-100 text-gray-900 rounded-bl-md'}`}>
-                                <div className="text-sm whitespace-pre-wrap break-words">{message.text}</div>
+                                <div className="text-sm whitespace-pre-wrap break-words">{renderTextContent(message.text)}</div>
 
                                 {/* Attachments */}
                                 {message.attachments?.length > 0 && (
