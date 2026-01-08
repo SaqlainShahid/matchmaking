@@ -100,9 +100,10 @@ export const getUserById = async (userId) => {
 // Get all service providers
 export const getServiceProviders = async (filters = {}) => {
   try {
+    // Include typical provider roles and company/agency accounts
     let q = query(
       collection(db, USERS_COLLECTION),
-      where('role', 'in', ['service_provider', 'provider'])
+      where('role', 'in', ['service_provider', 'provider', 'company', 'agency', 'contractor'])
     );
 
     // Add additional filters if provided
@@ -137,9 +138,10 @@ export const getMatchingProviders = async (serviceType, area = '') => {
 
     // Query by serviceType field
     try {
+      // Allow for a broader set of provider-like roles (service providers, companies, agencies)
       const q1 = query(
-        collection(db, USERS_COLLECTION),
-        where('role', 'in', ['service_provider', 'provider']),
+      collection(db, USERS_COLLECTION),
+      where('role', 'in', ['service_provider', 'provider', 'company', 'agency', 'contractor']),
         where('serviceType', '==', serviceType)
       );
       const snap1 = await getDocs(q1);
@@ -151,9 +153,10 @@ export const getMatchingProviders = async (serviceType, area = '') => {
 
     // Query by services array (array-contains)
     try {
+      // Allow for a broader set of provider-like roles (service providers, companies, agencies)
       const q2 = query(
-        collection(db, USERS_COLLECTION),
-        where('role', 'in', ['service_provider', 'provider']),
+      collection(db, USERS_COLLECTION),
+      where('role', 'in', ['service_provider', 'provider', 'company', 'agency', 'contractor']),
         where('services', 'array-contains', serviceType)
       );
       const snap2 = await getDocs(q2);

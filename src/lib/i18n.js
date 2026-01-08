@@ -655,6 +655,7 @@ const translations = {
     , 'Services Complémentaires & Coordination': 'Services Complémentaires & Coordination'
   }
 };
-let language = 'fr';
+// Default to English for tests and broader compatibility. Set to 'fr' in prod if needed via setLanguage.
+let language = 'en';
 export const setLanguage = (lang) => { language = lang; };
 export const t = (key) => (translations[language] && translations[language][key]) || key;

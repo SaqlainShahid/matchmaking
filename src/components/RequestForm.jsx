@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadToCloudinary } from '../services/cloudinaryService';
-import { createRequest } from '../services/ordergiverservices/orderGiverService';
+import { createRequest, updateRequest, getRequestById } from '../services/ordergiverservices/orderGiverService';
 import { useAuth } from '../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import { Loader2, Building2, Clock, MapPin, Calendar, Upload, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
@@ -65,7 +65,7 @@ const priorityLevels = [
   },
 ];
 
-export default function EnterpriseRequestForm() {
+export default function EnterpriseRequestForm({ initialData = null, requestId = null }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -91,6 +91,56 @@ export default function EnterpriseRequestForm() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isEditing = Boolean(initialData || requestId);
+
+  // Load initial data when editing
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        if (initialData) {
+          const data = initialData;
+          setFormData({
+            title: data.title || '',
+            description: data.description || '',
+            serviceType: data.serviceType || '',
+            priority: data.priority || 'urgent_sur_devis',
+            location: data.location?.address || data.location || '',
+            costCenter: data.costCenter || '',
+            scheduledDate: data.scheduledDate || '',
+            budget: data.budget ? String(data.budget) : '',
+            contactPerson: data.contact?.person || '',
+            contactPhone: data.contact?.phone || '',
+          });
+          // When editing an existing request, show the Location & Contact step so that contact fields are visible for edits
+          setCurrentStep(2);
+          setFiles((data.files || []).map((url) => ({ id: url, name: url, preview: '', progress: 100, url })));
+        } else if (requestId) {
+          const req = await getRequestById(requestId);
+          if (!mounted) return;
+          setFormData({
+            title: req.title || '',
+            description: req.description || '',
+            serviceType: req.serviceType || '',
+            priority: req.priority || 'urgent_sur_devis',
+            location: req.location?.address || req.location || '',
+            costCenter: req.costCenter || '',
+            scheduledDate: req.scheduledDate || '',
+            budget: req.budget ? String(req.budget) : '',
+            contactPerson: req.contact?.person || '',
+            contactPhone: req.contact?.phone || '',
+          });
+          // When editing an existing request, show the Location & Contact step so that contact fields are visible for edits
+          setCurrentStep(2);
+          setFiles((req.files || []).map((url) => ({ id: url, name: url, preview: '', progress: 100, url })));
+        }
+      } catch (err) {
+        console.error('Failed to load request for editing:', err);
+      }
+    };
+    if (isEditing) load();
+    return () => { mounted = false; };
+  }, [initialData, requestId, isEditing]);
 
   const validateStep = (step) => {
     const errors = {};
@@ -110,7 +160,15 @@ export default function EnterpriseRequestForm() {
       if (!formData.location) errors.location = t('Service location is required');
       if (!formData.costCenter) errors.costCenter = t('Cost center is required');
       if (!formData.contactPerson) errors.contactPerson = t('Contact person is required');
-      if (!formData.contactPhone) errors.contactPhone = t('Contact phone is required');
+      if (!formData.contactPhone) {
+        errors.contactPhone = t('Contact phone is required');
+      } else {
+        // Basic format validation: expect +33 followed by 6-12 digits (spaces are allowed)
+        const cleaned = formData.contactPhone.replace(/[^0-9+]/g, '');
+        if (!/^\+33[0-9]{6,12}$/.test(cleaned)) {
+          errors.contactPhone = t('Invalid phone number format');
+        }
+      }
     }
     
     setFormErrors(errors);
@@ -120,8 +178,15 @@ export default function EnterpriseRequestForm() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'contactPhone') {
-      const digits = (value || '').replace(/[^0-9]/g, '');
-      const normalized = `+33 ${digits}`.replace(/\s+/g, ' ').trim();
+      const raw = value || '';
+      const digits = raw.replace(/[^0-9]/g, '');
+      let local = digits;
+      if (digits.startsWith('33')) {
+        local = digits.slice(2);
+      } else if (digits.startsWith('0') && digits.length > 1) {
+        local = digits.slice(1);
+      }
+      const normalized = local ? `+33 ${local}` : '';
       setFormData(prev => ({ ...prev, contactPhone: normalized }));
     } else {
       setFormData(prev => ({
@@ -245,37 +310,69 @@ export default function EnterpriseRequestForm() {
       };
 
       // Create the request using central service helper so all dashboards stay consistent
-      const newRequest = await createRequest(currentUser.uid, requestPayload);
+      if (isEditing) {
+        const targetId = requestId || (initialData && initialData.id);
+        const updated = await updateRequest(targetId, requestPayload);
+        try {
+          await sendNotification(currentUser.uid, 'REQUEST_UPDATED', {
+            requestId: updated.id,
+            requestTitle: formData.title || t('Service Request')
+          });
+        } catch (notifyErr) {
+          console.warn('Request updated, but notification failed:', notifyErr);
+        }
+        setSubmittedRequest({ id: updated.id, title: formData.title });
+        setShowSuccessModal(true);
+      } else {
+        const newRequest = await createRequest(currentUser.uid, requestPayload);
 
-      // Fire-and-forget: notify current user about request creation
-      try {
-        await sendNotification(currentUser.uid, 'REQUEST_CREATED', {
-          requestId: newRequest.id,
-          requestTitle: formData.title || t('Service Request')
+        // Fire-and-forget: notify current user about request creation
+        try {
+          await sendNotification(currentUser.uid, 'REQUEST_CREATED', {
+            requestId: newRequest.id,
+            requestTitle: formData.title || t('Service Request')
+          });
+        } catch (notifyErr) {
+          console.warn('Request created, but notification failed:', notifyErr);
+        }
+
+        // Broadcast to matching providers (category + area)
+        try {
+          const providers = await getMatchingProviders(formData.serviceType, formData.location);
+          const notifyId = newRequest.id;
+
+        // Add a toast log to surface provider count so we can debug empty broadcasts
+        toast({
+          title: t('Providers Found'),
+          description: `${providers.length} ${t('providers matched your request.')}`,
+          duration: 4000
         });
-      } catch (notifyErr) {
-        console.warn('Request created, but notification failed:', notifyErr);
-      }
 
-      // Broadcast to matching providers (category + area)
-      try {
-        const providers = await getMatchingProviders(formData.serviceType, formData.location);
-        const notifyId = newRequest.id;
+        if (providers.length === 0) {
+          console.warn('No providers matched for', formData.serviceType, formData.location);
+        }
+
         await Promise.all(
           providers.map((p) =>
             sendNotification(p.id, 'NEW_REQUEST_AVAILABLE', {
               requestId: notifyId,
               requestTitle: formData.title || t('Service Request'),
               serviceType: formData.serviceType
+            }).catch((err) => {
+              console.warn('Failed sending provider notification to', p.id, err);
             })
           )
         );
+
+        // If a forwarder is configured server-side, we also attempt to trigger it for each created notification
+        // (sendNotification will create a notification document which will be forwarded by the forwarder)
       } catch (err) {
         console.warn('Provider broadcast failed:', err);
       }
 
-      setSubmittedRequest({ id: newRequest.id, title: formData.title });
-      setShowSuccessModal(true);
+        setSubmittedRequest({ id: newRequest.id, title: formData.title });
+        setShowSuccessModal(true);
+      }
       
     } catch (error) {
       console.error('Error submitting request:', error);
@@ -567,7 +664,6 @@ export default function EnterpriseRequestForm() {
                           setFormData(prev => ({ ...prev, contactPhone: '+33 ' }));
                         }
                       }}
-                      pattern="^\+33\s?[0-9]{6,}$"
                       placeholder={t('+33 6 12 34 56 78')}
                       className={`h-11 ${formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
                     />

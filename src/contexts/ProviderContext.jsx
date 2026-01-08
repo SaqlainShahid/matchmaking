@@ -131,10 +131,10 @@ export const ProviderProvider = ({ children }) => {
     return updateProjectProgress(projectId, progress, updates);
   };
 
-  const createInvoice = async (projectId) => {
+  const createInvoice = async (projectId, invoiceData = {}) => {
     const uid = user?.uid || auth.currentUser?.uid;
     if (!uid) throw new Error('Not authenticated');
-    return generateInvoice(projectId);
+    return generateInvoice(projectId, invoiceData);
   };
 
   const uploadPhoto = async (projectId, file) => {

@@ -86,6 +86,22 @@ export const createNotification = async (notificationData) => {
     };
 
     await setDoc(notificationRef, notification);
+
+    // Fire-and-forget: if frontend has a forwarder URL configured, call it to push to FCM tokens
+    try {
+      const forwarderUrl = import.meta.env.VITE_NOTIFICATION_FORWARDER_URL;
+      if (forwarderUrl) {
+        // Send only minimal info (notification id) to the serverless forwarder
+        fetch(forwarderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notificationId: notificationRef.id })
+        }).catch((e) => console.warn('Notification forwarder call failed:', e));
+      }
+    } catch (e) {
+      console.warn('Notification forwarder invocation error:', e);
+    }
+
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);

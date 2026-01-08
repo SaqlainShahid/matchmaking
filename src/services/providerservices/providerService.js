@@ -213,19 +213,25 @@ export const updateProjectProgress = async (projectId, progress, updates = {}) =
   return proj;
 };
 
-export const generateInvoice = async (projectId) => {
+export const generateInvoice = async (projectId, overrides = {}) => {
   // Create base invoice document in Firestore
   const invoiceRef = doc(collection(db, INVOICES_COLLECTION));
   const projSnap = await getDoc(doc(db, PROJECTS_COLLECTION, projectId));
   const proj = projSnap.data() || {};
+
+  // Allow provider to override amount, currency, or add a note
+  const amount = Number(overrides.amount ?? proj.budget) || 0;
+  const currency = overrides.currency || proj.currency || 'EUR';
+  const note = overrides.note || '';
 
   const baseInvoice = {
     id: invoiceRef.id,
     projectId,
     providerId: proj.providerId,
     orderGiverId: proj.clientId || proj.orderGiverId,
-    amount: Number(proj.budget) || 0,
-    currency: proj.currency || 'USD',
+    amount,
+    currency,
+    note,
     status: 'generated',
     date: serverTimestamp(),
     invoiceUrl: null,
@@ -275,7 +281,7 @@ export const generateInvoice = async (projectId) => {
   });
 
   // Totals
-  const finalAmount = Number(proj.budget) || 0;
+  const finalAmount = Number(baseInvoice.amount) || 0;
   const totalsY = (docPdf.lastAutoTable?.finalY || 62) + 10;
   docPdf.setFontSize(12);
   docPdf.text(`Total: ${baseInvoice.currency} ${finalAmount}`, 14, totalsY);

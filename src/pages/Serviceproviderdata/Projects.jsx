@@ -6,6 +6,7 @@ import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
 import { t } from '../../lib/i18n';
+import { useToast } from '../../components/ui/use-toast';
 
 const Projects = () => {
   const ctx = useProvider();
@@ -19,6 +20,8 @@ const Projects = () => {
   const [completeModal, setCompleteModal] = useState({ open: false, projectId: null });
   const [progressDraftByProject, setProgressDraftByProject] = useState({});
   const [activeTab, setActiveTab] = useState('active');
+  const toast = useToast()?.toast || (() => {});
+  const [invoiceModal, setInvoiceModal] = useState({ open: false, projectId: null, amount: '', note: '' });
 
   const filteredProjects = activeTab === 'all' ? projects : projects.filter(p => p.status === activeTab);
 
@@ -31,10 +34,22 @@ const Projects = () => {
   };
 
   const handleGenerateInvoice = async (projectId) => {
+    // Open invoice modal with prefilled amount from project budget
+    const proj = projects.find(p => p.id === projectId) || {};
+    setInvoiceModal({ open: true, projectId, amount: proj.budget ? String(proj.budget) : '', note: '' });
+  };
+
+  const handleConfirmGenerateInvoice = async () => {
+    const { projectId, amount, note } = invoiceModal;
+    if (!projectId) return;
     try {
-      await createInvoice(projectId);
+      await createInvoice(projectId, { amount, note });
+      toast({ title: t('Invoice Generated'), description: t('The invoice has been generated and is available in your Invoices list.') });
     } catch (e) {
       console.error(e);
+      toast({ title: t('Invoice Generation Failed'), description: e.message || t('Failed to create invoice.'), variant: 'destructive' });
+    } finally {
+      setInvoiceModal({ open: false, projectId: null, amount: '', note: '' });
     }
   };
 
@@ -194,6 +209,28 @@ const Projects = () => {
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCompleteModal({ open: false, projectId: null })}>{t('Cancel')}</Button>
               <Button onClick={async () => { try { await handleUpdate(completeModal.projectId, 100); } finally { setCompleteModal({ open: false, projectId: null }); }}}>{t('Confirm & Complete')}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {invoiceModal.open && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">{t('Generate Invoice')}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Amount')}</label>
+                <Input value={invoiceModal.amount} onChange={(e) => setInvoiceModal(prev => ({ ...prev, amount: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Notes (optional)')}</label>
+                <Input value={invoiceModal.note} onChange={(e) => setInvoiceModal(prev => ({ ...prev, note: e.target.value }))} />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setInvoiceModal({ open: false, projectId: null, amount: '', note: '' })}>{t('Cancel')}</Button>
+              <Button onClick={handleConfirmGenerateInvoice}>{t('Generate Invoice')}</Button>
             </div>
           </div>
         </div>

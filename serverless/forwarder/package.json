@@ -1,0 +1,9 @@
+{
+  "name": "notification-forwarder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "firebase-admin": "^11.11.0"
+  }
+}
