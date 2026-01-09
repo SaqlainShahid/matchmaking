@@ -29,6 +29,7 @@ const AdminLayout = () => {
     { path: '/admin/requests', icon: FiFileText, label: t('Requests') },
     { path: '/admin/quotes', icon: FiClipboard, label: t('Quotes') },
     { path: '/admin/payments', icon: FiFile, label: t('Payments') },
+    { path: '/admin/revenue', icon: FiBarChart2, label: t('Revenue') },
     { path: '/admin/notifications', icon: FiBell, label: t('Notifications') },
     { path: '/admin/messages', icon: FiMessageSquare, label: t('Messages') },
     { path: '/admin/feedback', icon: FiClipboard, label: t('Feedback') },
@@ -79,7 +80,7 @@ const AdminLayout = () => {
             const Icon = item.icon; const isActive = location.pathname === item.path || (item.end ? location.pathname === item.path : location.pathname.startsWith(item.path));
             return (
               <NavLink key={item.path} to={item.path} end={item.end} className={navClass} title={isCollapsed ? item.label : ''} onClick={closeMobileMenu}>
-                <Icon size={18} className={`transition-colors ${isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'} ${isCollapsed ? '' : 'mr-3'}`} />
+                <Icon size={18} className={`transition-colors ${isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'} ${isCollapsed ? 'text-2xl' : 'text-xl mr-3'}`} />
                 {!isCollapsed && (<><span className="flex-1">{item.label}</span>{isActive && (<FiChevronRight size={16} className="text-blue-700 ml-2" />)}</>)}
               </NavLink>
             );

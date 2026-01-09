@@ -403,6 +403,11 @@ export const createInvoiceForAcceptedQuote = async (quoteId) => {
       return { id: invSnap.docs[0].id, ...invSnap.docs[0].data() };
     }
 
+    // Calculate amounts
+    const providerAmount = Number(proj.budget) || Number(quote.amount) || 0;
+    const clientAmount = Math.round(providerAmount * 1.2 * 100) / 100; // 20% margin, rounded to 2 decimals
+    const commission = Math.round((clientAmount - providerAmount) * 100) / 100;
+
     // Create new invoice
     const invoiceRef = doc(collection(db, INVOICES_COLLECTION));
     const invoice = {
@@ -410,12 +415,16 @@ export const createInvoiceForAcceptedQuote = async (quoteId) => {
       projectId: proj.id,
       providerId: proj.providerId,
       orderGiverId,
-      amount: Number(proj.budget) || Number(quote.amount) || 0,
+      providerAmount,
+      clientAmount,
+      commission,
       status: 'pending_payment',
       date: serverTimestamp(),
       invoiceUrl: null,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      quoteId: quoteId,
+      requestId: proj.requestId
     };
     await setDoc(invoiceRef, invoice);
     

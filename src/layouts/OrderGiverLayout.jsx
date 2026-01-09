@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import clsx from 'clsx';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -22,8 +23,10 @@ import {
   FiUsers
 } from 'react-icons/fi';
 import { t } from '../lib/i18n';
+import { useOrderGiver } from '../contexts/OrderGiverContext';
 
 const OrderGiverLayout = () => {
+  const { quotes } = useOrderGiver();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -168,12 +171,20 @@ const OrderGiverLayout = () => {
                     className={navClass}
                     title={isCollapsed ? item.label : ''}
                   >
-                    <Icon 
-                      size={18} 
-                      className={`transition-colors ${
-                        isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'
-                      } ${isCollapsed ? '' : 'mr-3'}`} 
-                    />
+                    <span className={clsx(
+                      'mr-3 flex items-center justify-center',
+                      {
+                        'text-2xl': isCollapsed,
+                        'text-xl': !isCollapsed,
+                      }
+                    )}>
+                      <Icon 
+                        size={18} 
+                        className={`transition-colors ${
+                          isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'
+                        }`} 
+                      />
+                    </span>
                     {!isCollapsed && (
                       <>
                         <span className="flex-1">{item.label}</span>
@@ -366,6 +377,13 @@ const OrderGiverLayout = () => {
                 </div>
               )}
             </div>
+            {/* Minimal balance widget, right after bell icon */}
+            <NavLink to="/payments" className="flex items-center justify-center hover:bg-blue-50 px-2 py-1 rounded-lg transition group" title={t('Balance')} style={{ minWidth: 0 }}>
+              <span className="flex items-center gap-1">
+                <span className="text-blue-600 text-xl"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75h-10.5m10.5 0a2.25 2.25 0 0 1 2.25 2.25v6a2.25 2.25 0 0 1-2.25 2.25m0-10.5v0a2.25 2.25 0 0 0-2.25-2.25h-3a2.25 2.25 0 0 0-2.25 2.25m10.5 0v0a2.25 2.25 0 0 0-2.25-2.25h-3a2.25 2.25 0 0 0-2.25 2.25m0 0h-2.25A2.25 2.25 0 0 0 4.5 9v6a2.25 2.25 0 0 0 2.25 2.25h2.25m0 0a2.25 2.25 0 0 0 2.25 2.25h3a2.25 2.25 0 0 0 2.25-2.25m-7.5 0h7.5" /></svg></span>
+                <span className="text-blue-700 font-bold text-lg" style={{ minWidth: '3.5rem', textAlign: 'right' }}>€{(quotes?.filter(q => q.status === 'accepted').reduce((sum, q) => sum + (q.amount ?? 0), 0) || 0).toFixed(2)}</span>
+              </span>
+            </NavLink>
             
             {/* User Menu */}
             <div className="relative" ref={userMenuRef}>

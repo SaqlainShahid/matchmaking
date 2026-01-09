@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { countryCodes } from './countryCodes';
+import { getCountryISO } from './getCountryISO';
 import { useNavigate } from 'react-router-dom';
 import { uploadToCloudinary } from '../services/cloudinaryService';
 import { createRequest, updateRequest, getRequestById } from '../services/ordergiverservices/orderGiverService';
@@ -66,17 +68,29 @@ const priorityLevels = [
 ];
 
 export default function EnterpriseRequestForm({ initialData = null, requestId = null }) {
+    // --- Country dropdown state for phone input ---
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const [countrySearch, setCountrySearch] = useState('');
+    // Close dropdown on outside click
+    useEffect(() => {
+      if (!showCountryDropdown) return;
+      const handler = (e) => {
+        if (!e.target.closest('.country-dropdown-root')) setShowCountryDropdown(false);
+      };
+      document.addEventListener('mousedown', handler);
+      return () => document.removeEventListener('mousedown', handler);
+    }, [showCountryDropdown]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     serviceType: '',
     priority: 'urgent_sur_devis',
     location: '',
-    costCenter: '',
     scheduledDate: '',
     budget: '',
     contactPerson: '',
     contactPhone: '',
+    contactCountryCode: '+33',
   });
   
   const [files, setFiles] = useState([]);
@@ -106,7 +120,7 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
             serviceType: data.serviceType || '',
             priority: data.priority || 'urgent_sur_devis',
             location: data.location?.address || data.location || '',
-            costCenter: data.costCenter || '',
+            // costCenter removed
             scheduledDate: data.scheduledDate || '',
             budget: data.budget ? String(data.budget) : '',
             contactPerson: data.contact?.person || '',
@@ -124,7 +138,7 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
             serviceType: req.serviceType || '',
             priority: req.priority || 'urgent_sur_devis',
             location: req.location?.address || req.location || '',
-            costCenter: req.costCenter || '',
+            // costCenter removed
             scheduledDate: req.scheduledDate || '',
             budget: req.budget ? String(req.budget) : '',
             contactPerson: req.contact?.person || '',
@@ -158,15 +172,21 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
 
     if (step === 2) {
       if (!formData.location) errors.location = t('Service location is required');
-      if (!formData.costCenter) errors.costCenter = t('Cost center is required');
       if (!formData.contactPerson) errors.contactPerson = t('Contact person is required');
       if (!formData.contactPhone) {
         errors.contactPhone = t('Contact phone is required');
       } else {
-        // Basic format validation: expect +33 followed by 6-12 digits (spaces are allowed)
-        const cleaned = formData.contactPhone.replace(/[^0-9+]/g, '');
-        if (!/^\+33[0-9]{6,12}$/.test(cleaned)) {
-          errors.contactPhone = t('Invalid phone number format');
+        // Validate phone: use min/max for selected country
+        const selectedCountry = countryCodes.find(c => c.code === formData.contactCountryCode);
+        const cleaned = formData.contactPhone.replace(/[^0-9]/g, '');
+        if (selectedCountry) {
+          if (cleaned.length < selectedCountry.min || cleaned.length > selectedCountry.max) {
+            errors.contactPhone = t(`Phone number must be between ${selectedCountry.min} and ${selectedCountry.max} digits for ${selectedCountry.name}`);
+          }
+        } else {
+          if (cleaned.length < 6 || cleaned.length > 15) {
+            errors.contactPhone = t('Invalid phone number format');
+          }
         }
       }
     }
@@ -178,16 +198,15 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'contactPhone') {
-      const raw = value || '';
-      const digits = raw.replace(/[^0-9]/g, '');
-      let local = digits;
-      if (digits.startsWith('33')) {
-        local = digits.slice(2);
-      } else if (digits.startsWith('0') && digits.length > 1) {
-        local = digits.slice(1);
+      // Prevent entering more digits than allowed for selected country
+      const selectedCountry = countryCodes.find(c => c.code === formData.contactCountryCode);
+      let cleaned = value.replace(/[^0-9]/g, '');
+      if (selectedCountry && cleaned.length > selectedCountry.max) {
+        cleaned = cleaned.slice(0, selectedCountry.max);
       }
-      const normalized = local ? `+33 ${local}` : '';
-      setFormData(prev => ({ ...prev, contactPhone: normalized }));
+      setFormData(prev => ({ ...prev, contactPhone: cleaned }));
+    } else if (name === 'contactCountryCode') {
+      setFormData(prev => ({ ...prev, contactCountryCode: value }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -296,14 +315,14 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
         description: formData.description,
         serviceType: formData.serviceType,
         priority: formData.priority,
-        costCenter: formData.costCenter,
+        // costCenter removed
         budget: formData.budget ? parseFloat(formData.budget) : null,
         currency: 'EUR',
         // location as a normalized object
         location: { address: formData.location },
         contact: {
           person: formData.contactPerson,
-          phone: (formData.contactPhone?.startsWith('+33') ? formData.contactPhone : (`+33 ${formData.contactPhone || ''}`)).trim(),
+          phone: `${formData.contactCountryCode} ${formData.contactPhone}`.trim(),
           email: currentUser.email,
         },
         files: fileUrls,
@@ -336,39 +355,35 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
           console.warn('Request created, but notification failed:', notifyErr);
         }
 
-        // Broadcast to matching providers (category + area)
+        // Broadcast to all providers (not just matching service type)
         try {
-          const providers = await getMatchingProviders(formData.serviceType, formData.location);
+          const providers = await getServiceProviders();
           const notifyId = newRequest.id;
 
-        // Add a toast log to surface provider count so we can debug empty broadcasts
-        toast({
-          title: t('Providers Found'),
-          description: `${providers.length} ${t('providers matched your request.')}`,
-          duration: 4000
-        });
+          toast({
+            title: t('Providers Found'),
+            description: `${providers.length} ${t('providers will see this request.')}`,
+            duration: 4000
+          });
 
-        if (providers.length === 0) {
-          console.warn('No providers matched for', formData.serviceType, formData.location);
+          if (providers.length === 0) {
+            console.warn('No providers found for broadcast');
+          }
+
+          await Promise.all(
+            providers.map((p) =>
+              sendNotification(p.id, 'NEW_REQUEST_AVAILABLE', {
+                requestId: notifyId,
+                requestTitle: formData.title || t('Service Request'),
+                serviceType: formData.serviceType
+              }).catch((err) => {
+                console.warn('Failed sending provider notification to', p.id, err);
+              })
+            )
+          );
+        } catch (err) {
+          console.warn('Provider broadcast failed:', err);
         }
-
-        await Promise.all(
-          providers.map((p) =>
-            sendNotification(p.id, 'NEW_REQUEST_AVAILABLE', {
-              requestId: notifyId,
-              requestTitle: formData.title || t('Service Request'),
-              serviceType: formData.serviceType
-            }).catch((err) => {
-              console.warn('Failed sending provider notification to', p.id, err);
-            })
-          )
-        );
-
-        // If a forwarder is configured server-side, we also attempt to trigger it for each created notification
-        // (sendNotification will create a notification document which will be forwarded by the forwarder)
-      } catch (err) {
-        console.warn('Provider broadcast failed:', err);
-      }
 
         setSubmittedRequest({ id: newRequest.id, title: formData.title });
         setShowSuccessModal(true);
@@ -601,24 +616,7 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="costCenter" className="text-sm font-semibold">{t('Cost Center *')}</Label>
-                    <Input
-                      id="costCenter"
-                      name="costCenter"
-                      type="text"
-                      value={formData.costCenter}
-                      onChange={handleInputChange}
-                      placeholder={t('e.g., CC-2024-OPS-001')}
-                      className={`h-11 ${formErrors.costCenter ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
-                    />
-                    {formErrors.costCenter && (
-                      <p className="text-sm text-red-600 flex items-center mt-1">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {formErrors.costCenter}
-                      </p>
-                    )}
-                  </div>
+                  {/* Cost Center removed */}
                 </div>
               </div>
 
@@ -653,20 +651,87 @@ export default function EnterpriseRequestForm({ initialData = null, requestId = 
 
                   <div className="space-y-2">
                     <Label htmlFor="contactPhone" className="text-sm font-semibold">{t('Contact Phone *')}</Label>
-                    <Input
-                      id="contactPhone"
-                      name="contactPhone"
-                      type="tel"
-                      value={formData.contactPhone}
-                      onChange={handleInputChange}
-                      onFocus={() => {
-                        if (!formData.contactPhone) {
-                          setFormData(prev => ({ ...prev, contactPhone: '+33 ' }));
+                    <div className="flex items-center gap-2 country-dropdown-root">
+                      {/* Custom searchable dropdown for country codes */}
+                      <div className="relative" style={{ minWidth: 180 }}>
+                        <button
+                          type="button"
+                          className="h-11 border border-gray-300 rounded-md px-3 bg-white text-base w-full flex items-center justify-between font-medium focus:outline-none"
+                          onClick={() => setShowCountryDropdown(v => !v)}
+                          style={{ minWidth: 180 }}
+                        >
+                          <span className="flex items-center gap-2">
+                            {(() => {
+                              const iso = getCountryISO(formData.contactCountryCode);
+                              return iso ? (
+                                <img src={`https://flagcdn.com/24x18/${iso}.png`} alt="flag" style={{ width: 24, height: 18, borderRadius: 2, objectFit: 'cover', border: '1px solid #eee' }} />
+                              ) : null;
+                            })()}
+                            <span style={{ fontWeight: 600 }}>{countryCodes.find(c => c.code === formData.contactCountryCode)?.name}</span>
+                            <span className="text-gray-500">{countryCodes.find(c => c.code === formData.contactCountryCode)?.code}</span>
+                          </span>
+                          <span className="ml-2">▼</span>
+                        </button>
+                        {showCountryDropdown && (
+                          <div className="absolute z-20 bg-white border border-gray-300 rounded-md mt-1 w-full max-h-60 overflow-y-auto shadow-lg" style={{ minWidth: 220 }}>
+                            <input
+                              type="text"
+                              className="w-full p-2 border-b border-gray-200 focus:outline-none"
+                              placeholder="Search country..."
+                              value={countrySearch}
+                              onChange={e => setCountrySearch(e.target.value)}
+                              autoFocus
+                            />
+                            {countryCodes.filter(c =>
+                              c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                              c.code.includes(countrySearch)
+                            ).map(c => (
+                              <div
+                                key={c.code}
+                                className="px-2 py-2 hover:bg-blue-100 cursor-pointer flex items-center gap-2"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, contactCountryCode: c.code }));
+                                  setShowCountryDropdown(false);
+                                  setCountrySearch('');
+                                }}
+                              >
+                                {(() => {
+                                  const iso = getCountryISO(c.code);
+                                  return iso ? (
+                                    <img src={`https://flagcdn.com/24x18/${iso}.png`} alt="flag" style={{ width: 24, height: 18, borderRadius: 2, objectFit: 'cover', border: '1px solid #eee' }} />
+                                  ) : null;
+                                })()}
+                                <span style={{ fontWeight: 600 }}>{c.name}</span>
+                                <span className="text-gray-500">{c.code}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.contactCountryCode}
+                        onChange={e => setFormData(prev => ({ ...prev, contactCountryCode: e.target.value }))}
+                        className="h-11 px-2 text-lg w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded-md bg-gray-50 focus:bg-white focus:outline-none"
+                        style={{ minWidth: 60, maxWidth: 80 }}
+                        aria-label="Country code"
+                      />
+                      <Input
+                        id="contactPhone"
+                        name="contactPhone"
+                        type="tel"
+                        value={formData.contactPhone}
+                        onChange={handleInputChange}
+                        placeholder={
+                          countryCodes.find(c => c.code === formData.contactCountryCode)
+                            ? t(`e.g. ${countryCodes.find(c => c.code === formData.contactCountryCode).example}`)
+                            : t('e.g. 612345678')
                         }
-                      }}
-                      placeholder={t('+33 6 12 34 56 78')}
-                      className={`h-11 ${formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
-                    />
+                        className={`h-11 border border-gray-300 rounded-md bg-white flex-1 ${formErrors.contactPhone ? 'ring-2 ring-red-500' : ''}`}
+                        style={{ minHeight: 44 }}
+                        autoComplete="tel"
+                      />
+                    </div>
                     {formErrors.contactPhone && (
                       <p className="text-sm text-red-600 flex items-center mt-1">
                         <AlertCircle className="h-3 w-3 mr-1" />

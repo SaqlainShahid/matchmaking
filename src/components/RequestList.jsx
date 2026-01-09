@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useOrderGiver } from '../contexts/OrderGiverContext';
+import { getInvoicesForOrderGiver } from '../services/ordergiverservices/invoiceService';
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -13,27 +14,36 @@ import { Search, Clock, AlertCircle, CheckCircle, XCircle, MessageSquare, Dollar
 import { t } from '../lib/i18n';
 import { normalizeRequest } from '../lib/requestUtils';
 
+
 const RequestList = () => {
   const navigate = useNavigate();
-  const { 
-    requests: rawRequests, 
-    loading, 
-    stats, 
-    activeTab, 
+  const {
+    requests: rawRequests,
+    loading,
+    stats,
+    activeTab,
     setActiveTab,
     cancelUserRequest,
     markRequestAsCompleted,
-    rateCompletedRequest
+    rateCompletedRequest,
+    user
   } = useOrderGiver();
   // Normalize requests so components use consistent fields
   const requests = (rawRequests || []).map(r => normalizeRequest(r));
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [showRatingModal, setShowRatingModal] = useState(null);
   const [cancelRequestId, setCancelRequestId] = useState(null);
+  const [invoices, setInvoices] = useState([]);
   const location = useLocation();
+
+  // Fetch invoices for this order giver
+  useEffect(() => {
+    if (!user?.uid) return;
+    getInvoicesForOrderGiver(user.uid).then(setInvoices).catch(() => setInvoices([]));
+  }, [user]);
 
   // Initialize search term from ?q= query param
   useEffect(() => {
@@ -282,27 +292,46 @@ const RequestList = () => {
           const isInProgress = currentStatus === 'in_progress' || currentStatus === 'en_cours';
           const isCompleted = currentStatus === 'completed' || currentStatus === 'approuvée' || currentStatus === 'terminee';
 
+          // Find invoice for this request
+          const invoice = invoices.find(inv => inv.projectId === request.projectId || inv.requestId === request.id);
           return (
-            <Card 
+            <Card
               key={request.id}
               className="cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => handleViewRequest(request.id)}
             >
               <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <CardTitle className="text-lg flex items-center gap-2">
-                {request.title || request.titre || t('Demande sans titre')}
-                <Badge className={status.className}>
-                  {status.icon}
-                  {status.text}
-                </Badge>
-              </CardTitle>
-              <div className="text-sm text-gray-500 flex items-center">
-                <Clock className="h-4 w-4 mr-1" />
-                {formatDistanceToNow(request.createdAt, { addSuffix: true })}
-              </div>
-            </div>
-          </CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {request.title || request.titre || t('Demande sans titre')}
+                    <Badge className={status.className}>
+                      {status.icon}
+                      {status.text}
+                    </Badge>
+                  </CardTitle>
+                  <div className="text-sm text-gray-500 flex items-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {formatDistanceToNow(request.createdAt, { addSuffix: true })}
+                  </div>
+                </div>
+                {/* Accepted Quote & Invoice Status */}
+                {request.acceptedQuote && (
+                  <div className="mt-2 flex flex-wrap gap-2 items-center">
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      {t('Accepted Quote')}: €{request.acceptedQuote.price || request.acceptedQuote.amount || '-'}
+                    </Badge>
+                    {invoice && (
+                      <Badge className={
+                        invoice.status === 'paid'
+                          ? 'bg-blue-100 text-blue-800 border-blue-200'
+                          : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                      }>
+                        {t('Invoice')}: {invoice.status === 'paid' ? t('Paid') : t('Pending Payment')}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </CardHeader>
               <CardContent className="pb-2">
                 <p className="text-gray-600 line-clamp-2">
                   {request.description || t('Aucune description fournie')}

@@ -22,6 +22,8 @@ import {
   FiChevronLeft
 } from 'react-icons/fi';
 import { t } from '../lib/i18n';
+import { useProvider } from '../contexts/ProviderContext';
+import { FiDollarSign } from 'react-icons/fi';
 
 const ProviderLayout = () => {
   const navigate = useNavigate();
@@ -125,6 +127,17 @@ const ProviderLayout = () => {
   const mainContentMargin = isCollapsed ? 'ml-0 lg:ml-20' : 'ml-0 lg:ml-64';
   const mobileSidebarTranslate = isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full';
 
+  // Earnings summary for navbar
+  const { stats, invoices } = useProvider();
+  const totalEarnings = stats.earnings?.toFixed(2) ?? '0.00';
+  const now = new Date();
+  const thisMonthEarnings = invoices?.filter(inv => {
+    const d = inv.date?.toDate?.();
+    if (!d) return false;
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).reduce((sum, inv) => sum + (inv.providerAmount ?? 0), 0).toFixed(2);
+  const lastPayment = invoices?.length ? invoices[invoices.length - 1].providerAmount?.toFixed(2) : null;
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
@@ -173,7 +186,7 @@ const ProviderLayout = () => {
                       size={18}
                       className={`transition-colors ${
                         isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'
-                      } ${isCollapsed ? '' : 'mr-3'}`}
+                      } ${isCollapsed ? 'text-2xl' : 'text-xl mr-3'}`}
                     />
                     {!isCollapsed && (
                       <>
@@ -274,8 +287,9 @@ const ProviderLayout = () => {
 
       {/* Content */}
       <div className={`flex-1 flex flex-col min-w-0 ${mainContentMargin} transition-all duration-300`}>
-        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 h-16 px-6 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 h-20 px-6 flex items-center justify-between">
           <div className="flex items-center">
+            {/* Logo or title can go here if needed */}
             {/* Mobile menu button */}
             <button
               className="p-2 mr-2 rounded-lg lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100"
@@ -307,6 +321,13 @@ const ProviderLayout = () => {
           </div>
 
           <div className="flex items-center space-x-4 ml-6">
+                        {/* Minimal earnings widget, right-aligned before bell icon */}
+                        <NavLink to="/provider/earnings" className="flex items-center justify-center hover:bg-green-50 px-2 py-1 rounded-lg transition group" title={t('Earnings')} style={{ minWidth: 0 }}>
+                          <span className="flex items-center gap-1">
+                            <span className="text-green-600 text-xl"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75h-10.5m10.5 0a2.25 2.25 0 0 1 2.25 2.25v6a2.25 2.25 0 0 1-2.25 2.25m0-10.5v0a2.25 2.25 0 0 0-2.25-2.25h-3a2.25 2.25 0 0 0-2.25 2.25m10.5 0v0a2.25 2.25 0 0 0-2.25-2.25h-3a2.25 2.25 0 0 0-2.25 2.25m0 0h-2.25A2.25 2.25 0 0 0 4.5 9v6a2.25 2.25 0 0 0 2.25 2.25h2.25m0 0a2.25 2.25 0 0 0 2.25 2.25h3a2.25 2.25 0 0 0 2.25-2.25m-7.5 0h7.5" /></svg></span>
+                            <span className="text-green-700 font-bold text-lg" style={{ minWidth: '3.5rem', textAlign: 'right' }}>€{totalEarnings}</span>
+                          </span>
+                        </NavLink>
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications(v => !v)}

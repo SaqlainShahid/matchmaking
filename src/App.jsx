@@ -53,6 +53,9 @@ import AdminMessages from './pages/admindata/Messages'
 import AdminProviderServices from './pages/admindata/ProviderServices'
 import AdminProviderServiceDetail from './pages/admindata/ProviderServiceDetail'
 import FeedbackProvider from './pages/Serviceproviderdata/Feedback'
+import Earnings from './pages/Serviceproviderdata/Earnings'
+import Payments from './pages/ordergiverdata/Payments'
+import AdminRevenue from './pages/admindata/Revenue'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -117,6 +120,7 @@ function App() {
           <Route path="/messages" element={<Messages />} />
           <Route path="/feedback" element={<FeedbackOG />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/payments" element={<Payments />} />
         </Route>
         {/* Protected Provider Area with static sidebar */}
         <Route
@@ -142,6 +146,7 @@ function App() {
           <Route path="/provider/messages" element={<ProviderMessages />} />
           <Route path="/provider/feedback" element={<FeedbackProvider />} />
           <Route path="/provider/settings" element={<ProviderSettings />} />
+          <Route path="/provider/earnings" element={<Earnings />} />
         </Route>
 
         {/* Protected Admin Area with static sidebar */}
@@ -163,6 +168,7 @@ function App() {
           <Route path="/admin/requests" element={<AdminRequests />} />
           <Route path="/admin/quotes" element={<AdminQuotes />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
+          <Route path="/admin/revenue" element={<AdminRevenue />} />
           <Route path="/admin/notifications" element={<AdminNotifications />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/feedback" element={<AdminFeedback />} />

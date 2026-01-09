@@ -566,16 +566,46 @@ const Quotes = () => {
 
       {showPayModal && selectedQuote && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2">{t('Demo Payment')}</h3>
-            <p className="text-sm text-gray-700">{t('You are paying for the accepted quote.')}</p>
-            <div className="mt-4 text-sm text-gray-600 space-y-2">
-              <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{selectedQuote.providerName}</span></div>
-              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-0 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z"/></svg>
+                {t('Payment Summary')}
+              </h3>
+              <button onClick={() => setShowPayModal(false)} className="text-white hover:text-blue-100 text-2xl">×</button>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowPayModal(false)}>{t('Close')}</Button>
-              <Button onClick={handlePayNow} disabled={paying} className="bg-blue-600 hover:bg-blue-700">{paying ? t('Processing...') : t('Confirm Payment')}</Button>
+            <div className="p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="inline-block bg-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs font-semibold">{t('Provider')}</span>
+                <span className="font-medium text-gray-900">{selectedQuote.providerName}</span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-700 flex items-center gap-1">
+                    <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z"/></svg>
+                    {t('Client Paid')}
+                  </span>
+                  <span className="font-bold text-blue-700 text-lg">€{invoice?.clientAmount?.toFixed(2) ?? '-'}</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-700 flex items-center gap-1">
+                    <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z"/></svg>
+                    {t('Provider Receives')}
+                  </span>
+                  <span className="font-bold text-green-700">€{invoice?.providerAmount?.toFixed(2) ?? '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700 flex items-center gap-1">
+                    <svg className="h-5 w-5 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z"/></svg>
+                    {t('Commission')}
+                  </span>
+                  <span className="font-bold text-yellow-600">€{invoice?.commission?.toFixed(2) ?? '-'}</span>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setShowPayModal(false)}>{t('Close')}</Button>
+                <Button onClick={handlePayNow} disabled={paying} className="bg-blue-600 hover:bg-blue-700 shadow-md">{paying ? t('Processing...') : t('Confirm & Pay')}</Button>
+              </div>
             </div>
           </div>
         </div>
@@ -588,11 +618,13 @@ const Quotes = () => {
             <p className="text-sm text-gray-700">{t('Enter payment details to accept this quote.')}</p>
             <div className="mt-4 text-sm text-gray-600 space-y-2">
               <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{selectedQuote.providerName}</span></div>
-              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-medium">${(selectedQuote.amount ?? selectedQuote.price ?? 0).toLocaleString?.() || (selectedQuote.amount ?? selectedQuote.price ?? 0)}</span></div>
+              <div className="flex justify-between"><span>{t('Client pays')}</span><span className="font-medium">€{invoice?.clientAmount?.toFixed(2) ?? '-'}</span></div>
+              <div className="flex justify-between"><span>{t('Provider receives')}</span><span className="font-medium">€{invoice?.providerAmount?.toFixed(2) ?? '-'}</span></div>
+              <div className="flex justify-between"><span>{t('Commission')}</span><span className="font-medium">€{invoice?.commission?.toFixed(2) ?? '-'}</span></div>
             </div>
             <div className="mt-4">
               <StripePayment
-                amount={(selectedQuote.amount ?? selectedQuote.price ?? 0)}
+                amount={invoice?.clientAmount ?? (selectedQuote.amount ?? selectedQuote.price ?? 0)}
                 providerName={selectedQuote.providerName}
                 requestTitle={selectedQuote.requestTitle}
                 onSuccess={async () => {
@@ -605,9 +637,11 @@ const Quotes = () => {
                     await loadQuotes('accepted');
                     setPaymentSuccessData({
                       providerName: selectedQuote.providerName,
-                      amount: selectedQuote.amount ?? selectedQuote.price ?? 0,
+                      amount: invoice?.clientAmount ?? selectedQuote.amount ?? selectedQuote.price ?? 0,
                       requestTitle: selectedQuote.requestTitle,
-                      invoiceId: inv?.id
+                      invoiceId: inv?.id,
+                      providerAmount: invoice?.providerAmount,
+                      commission: invoice?.commission
                     });
                     setShowPaymentSuccess(true);
                   } catch (e) {
@@ -630,20 +664,53 @@ const Quotes = () => {
 
       {showPaymentSuccess && paymentSuccessData && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2 text-green-700">{t('Payment Successful')}</h3>
-            <p className="text-sm text-gray-700">{t('Your payment has been processed and the quote has been accepted.')}</p>
-            <div className="mt-4 text-sm text-gray-700 space-y-2">
-              <div className="flex justify-between"><span>{t('Provider')}</span><span className="font-medium">{paymentSuccessData.providerName}</span></div>
-              <div className="flex justify-between"><span>{t('Request')}</span><span className="font-medium">{paymentSuccessData.requestTitle}</span></div>
-              <div className="flex justify-between"><span>{t('Amount')}</span><span className="font-semibold">${(paymentSuccessData.amount ?? 0).toLocaleString?.() || paymentSuccessData.amount}</span></div>
-              {paymentSuccessData.invoiceId && (
-                <div className="flex justify-between"><span>{t('Invoice ID')}</span><span className="font-mono">{paymentSuccessData.invoiceId}</span></div>
-              )}
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-0 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-400 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                {t('Payment Successful')}
+              </h3>
+              <button onClick={() => setShowPaymentSuccess(false)} className="text-white hover:text-green-100 text-2xl">×</button>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => { setShowPaymentSuccess(false); }}>{t('Close')}</Button>
-              <Button onClick={() => { setShowPaymentSuccess(false); }}>{t('Go to Projects')}</Button>
+            <div className="p-6">
+              <p className="text-base text-gray-700 mb-4">{t('Your payment has been processed and the quote has been accepted.')}</p>
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-700">{t('Provider')}</span>
+                  <span className="font-medium text-gray-900">{paymentSuccessData.providerName}</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-700">{t('Request')}</span>
+                  <span className="font-medium text-gray-900">{paymentSuccessData.requestTitle}</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-blue-700 font-medium flex items-center gap-1">{t('Client Paid')}</span>
+                  <span className="font-bold text-blue-700 text-lg">€{paymentSuccessData.amount?.toFixed?.(2) ?? paymentSuccessData.amount}</span>
+                </div>
+                {paymentSuccessData.providerAmount !== undefined && (
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-green-700 font-medium flex items-center gap-1">{t('Provider Received')}</span>
+                    <span className="font-bold text-green-700">€{paymentSuccessData.providerAmount?.toFixed?.(2) ?? paymentSuccessData.providerAmount}</span>
+                  </div>
+                )}
+                {paymentSuccessData.commission !== undefined && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-yellow-600 font-medium flex items-center gap-1">{t('Commission')}</span>
+                    <span className="font-bold text-yellow-600">€{paymentSuccessData.commission?.toFixed?.(2) ?? paymentSuccessData.commission}</span>
+                  </div>
+                )}
+                {paymentSuccessData.invoiceId && (
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-gray-700">{t('Invoice ID')}</span>
+                    <span className="font-mono text-gray-900">{paymentSuccessData.invoiceId}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => { setShowPaymentSuccess(false); }}>{t('Close')}</Button>
+                <Button onClick={() => { setShowPaymentSuccess(false); }}>{t('Go to Projects')}</Button>
+                <Button variant="outline" className="border-blue-500 text-blue-700" onClick={() => alert('Download coming soon!')}>{t('Download Invoice')}</Button>
+              </div>
             </div>
           </div>
         </div>

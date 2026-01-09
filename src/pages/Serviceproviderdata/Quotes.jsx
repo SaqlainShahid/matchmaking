@@ -9,10 +9,12 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Modal } from "../../components/ui/modal";
 import { CheckCircle2 } from 'lucide-react';
 import { t } from '../../lib/i18n';
+import { Badge } from '../../components/ui/badge';
 
 const Quotes = () => {
   const ctx = useProvider();
   const quotes = ctx?.quotes || [];
+  const invoices = ctx?.invoices || [];
   const createQuote = ctx?.createQuote || (async () => {});
   const location = useLocation();
   const navigate = useNavigate();
@@ -226,18 +228,39 @@ const Quotes = () => {
             {quotes.length === 0 ? (
               <div className="p-6 text-center text-gray-500">{t('No quotes yet')}</div>
             ) : (
-              quotes.map((q) => (
-                <div key={q.id} className="p-4 flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{t('Request')}: {q.requestId}</p>
-                    <p className="text-sm text-gray-500">{t('Amount')}: €{q.amount} • {t('Status')}: {q.status}</p>
+              quotes.map((q) => {
+                // Find invoice for this quote (by projectId or requestId)
+                const invoice = invoices.find(inv => inv.quoteId === q.id || inv.requestId === q.requestId);
+                return (
+                  <div key={q.id} className="p-4 flex items-center justify-between">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{t('Request')}: {q.requestId}</p>
+                      <p className="text-sm text-gray-500">{t('Amount')}: €{q.amount} • {t('Status')}: {q.status}</p>
+                      {q.status === 'accepted' && (
+                        <Badge className="bg-green-100 text-green-800 border-green-200 ml-1">{t('Accepted')}</Badge>
+                      )}
+                      {invoice && (
+                        <div className="flex flex-col gap-1 mt-1">
+                          <Badge className={
+                            invoice.status === 'paid'
+                              ? 'bg-blue-100 text-blue-800 border-blue-200 ml-1'
+                              : 'bg-yellow-100 text-yellow-800 border-yellow-200 ml-1'
+                          }>
+                            {t('Invoice')}: {invoice.status === 'paid' ? t('Paid') : t('Pending Payment')}
+                          </Badge>
+                          <span className="text-xs text-gray-700">
+                            {t('Client paid')}: €{invoice.clientAmount?.toFixed(2) ?? '-'} | {t('You receive')}: €{invoice.providerAmount?.toFixed(2) ?? '-'} | {t('Commission')}: €{invoice.commission?.toFixed(2) ?? '-'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/provider/messages?otherUserId=${q.clientId}`)}>{t('Message')}</Button>
+                      <div className="text-xs text-gray-400">{q.createdAt?.toLocaleString?.() || ''}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/provider/messages?otherUserId=${q.clientId}`)}>{t('Message')}</Button>
-                    <div className="text-xs text-gray-400">{q.createdAt?.toLocaleString?.() || ''}</div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
       </CardContent>

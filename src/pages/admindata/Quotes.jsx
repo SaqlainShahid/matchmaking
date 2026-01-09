@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getAllQuotes, setQuoteStatus } from '../../services/adminService';
+import { getInvoicesForRequest } from '../../services/ordergiverservices/invoiceService';
 import { t } from '../../lib/i18n';
+import { Badge } from '../../components/ui/badge';
 
 const Quotes = () => {
   const [quotes, setQuotes] = useState([]);
@@ -8,7 +10,16 @@ const Quotes = () => {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    getAllQuotes().then(setQuotes).catch(() => {}).finally(() => setLoading(false));
+    getAllQuotes().then(async (allQuotes) => {
+      // For each quote, fetch invoice for its requestId
+      const quotesWithInvoices = await Promise.all(
+        allQuotes.map(async (q) => {
+          const invoices = await getInvoicesForRequest(q.requestId);
+          return { ...q, invoice: invoices[0] || null };
+        })
+      );
+      setQuotes(quotesWithInvoices);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const filtered = quotes.filter(q => filter === 'all' ? true : q.status === filter);
@@ -53,7 +64,23 @@ const Quotes = () => {
                 <td className="px-4 py-2">{q.requestId}</td>
                 <td className="px-4 py-2">{q.providerId}</td>
                 <td className="px-4 py-2">{Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(q.amount || 0))}</td>
-                <td className="px-4 py-2">{q.status || 'submitted'}</td>
+                <td className="px-4 py-2">
+                  {q.status || 'submitted'}
+                  {q.invoice && (
+                    <div className="flex flex-col gap-1 mt-1">
+                      <Badge className={
+                        q.invoice.status === 'paid'
+                          ? 'bg-blue-100 text-blue-800 border-blue-200 ml-1'
+                          : 'bg-yellow-100 text-yellow-800 border-yellow-200 ml-1'
+                      }>
+                        {t('Invoice')}: {q.invoice.status === 'paid' ? t('Paid') : t('Pending Payment')}
+                      </Badge>
+                      <span className="text-xs text-gray-700">
+                        {t('Client paid')}: €{q.invoice.clientAmount?.toFixed(2) ?? '-'} | {t('Provider receives')}: €{q.invoice.providerAmount?.toFixed(2) ?? '-'} | {t('Commission')}: €{q.invoice.commission?.toFixed(2) ?? '-'}
+                      </span>
+                    </div>
+                  )}
+                </td>
                 <td className="px-4 py-2">
                   <select className="border rounded-md px-2 py-1" defaultValue={q.status} onChange={e => handleStatus(q.id, e.target.value)}>
                     <option value="submitted">{t('Submitted')}</option>
